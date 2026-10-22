@@ -1,128 +1,94 @@
-# [<img src="./browser/icon.png" width="40" align="left" alt="Equicord">](https://github.com/Equicord/Equicord) Equicord
+# <img src="src/qualcord-logo.png" width="42" align="left" alt="Qualcord"> Qualcord Client
 
-[![Equibop](https://img.shields.io/badge/Equibop-grey?style=flat)](https://github.com/Equicord/Equibop)
-[![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://equicord.org/discord)
+[![Version](https://img.shields.io/badge/version-1.0.8-8A2BE2?style=flat&logo=github)](https://github.com/quadled/QualCord-Vencord-Equidcord-Client)
+[![Discord](https://img.shields.io/discord/1442497818764771512?color=5865F2&label=Qualcord%20Discord&logo=discord&logoColor=white)](https://discord.gg/Pk3dVqS5Hn)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-Equicord is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 300+ plugins.
+**Qualcord** ist ein hochmoderner, maßgeschneiderter Discord-Client mit über 300+ Plugins, einem revolutionären **In-App Live Plugin Studio**, exklusivem Glassmorphic-Design und vollständiger Anpassbarkeit.
 
-You can join our [Discord server](https://equicord.org/discord) for commits, changes, chatting, or even support.
+> 💬 **Offizieller Discord-Server:** Tritt unserer Community bei unter [discord.gg/Pk3dVqS5Hn](https://discord.gg/Pk3dVqS5Hn) für Updates, Support und Plugin-Sharing!
 
-### Included Plugins
+---
 
-Our included plugins can be found [here](https://equicord.org/plugins).
+## ⚡ Highlights & Features
 
-## Installing / Uninstalling
+* 💻 **Live Plugin Studio (In-App IDE):** Programmiere eigene Discord-Plugins direkt in der Discord-App! Mit Sofort-Kompilierung, Live-Testen ohne Neustart, fertigen Vorlagen (Slash-Commands, Toasts, Chatbar-Buttons, CSS) und dauerhafter Speicherung.
+* 📌 **Qualcord Community Pinning:** Der offizielle Qualcord-Server ist fest an oberster Stelle deiner Serverliste verankert (unverschiebbar).
+* 🚀 **Automatische System-Standards:** Voraktivierte Plugins (z. B. `ChannelTabs`) und automatische Versionserhöhung bei jedem Build.
+* 🔝 **Optimierte Sidebar:** Qualcord-Einstellungen befinden sich standardmäßig ganz oben in den Discord-Optionen.
+* 🎨 **Individuelles Dashboard:** Glassmorphes HTML/CSS-Dashboard mit Live-Statistiken über aktive und eigene Plugins.
 
-Windows
+---
 
-| | X64 | ARM64 |
-| --- | --- | --- |
-| GUI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.exe) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-arm64.exe) |
-| CLI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli.exe) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-arm64.exe) |
+## 📥 Installation / Herunterladen
 
-MacOS
+### Option 1: 1-Click Installation über Git (Empfohlen)
 
-| | Universal | X64 | ARM64 |
-| --- | --- | --- | --- |
-| GUI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.dmg) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x64.dmg) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-arm64.dmg) |
-| CLI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-universal) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-x64) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-arm64) |
+#### Voraussetzungen:
+* [Node.js (LTS Version)](https://nodejs.org/)
+* [Git](https://git-scm.com/)
 
-The CLI builds are plain binaries, so run `chmod +x <file>` after downloading.
-
-Linux
-
-| | X64 | ARM64 |
-| --- | --- | --- |
-| Combined GUI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-arm64) |
-| X11 GUI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x11) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x11-arm64) |
-| Wayland GUI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-wayland) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-wayland-arm64) |
-| CLI | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-linux) | [Download](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-linux-arm64) |
-
+#### 1. Repository klonen:
 ```shell
-bash -c "$(curl -sS https://raw.githubusercontent.com/Equicord/Equilotl/refs/heads/main/install.sh)"
+git clone https://github.com/quadled/QualCord-Vencord-Equidcord-Client.git
+cd QualCord-Vencord-Equidcord-Client
 ```
 
-## Installing Equicord Devbuild
-
-### Dependencies
-
-[Git](https://git-scm.com/download) and [Node.JS LTS](https://nodejs.dev/en/) are required.
-
-Install `pnpm`:
-
-> :exclamation: This next command may need to be run as admin/root depending on your system, and you may need to close and reopen your terminal for pnpm to be in your PATH.
-
+#### 2. PNPM installieren (falls noch nicht vorhanden):
 ```shell
-npm i -g pnpm
+npm install -g pnpm
 ```
 
-> :exclamation: **IMPORTANT** Make sure you aren't using an admin/root terminal from here onwards. It **will** mess up your Discord/Equicord instance and you **will** most likely have to reinstall.
-
-Clone Equicord:
-
+#### 3. Abhängigkeiten installieren & Qualcord kompilieren:
 ```shell
-git clone https://github.com/Equicord/Equicord
-cd Equicord
-```
-
-Install dependencies:
-
-```shell
-pnpm install --frozen-lockfile
-```
-
-Build Equicord:
-
-```shell
+pnpm install
 pnpm build
 ```
 
-Inject Equicord into your desktop client:
-
+#### 4. In deinen Discord Client einbinden (Inject):
 ```shell
 pnpm inject
 ```
+> *(Unter Windows kannst du alternativ einfach die Datei `inject.cmd` mit einem Doppelklick ausführen!)*
 
-Build Equicord for web:
+Starte Discord anschließend neu – Qualcord ist sofort aktiv!
 
-```shell
-pnpm buildWeb
+---
+
+### Option 2: Schnelle Windows Batch-Skripte
+
+Im Projektverzeichnis stehen dir fertige `.cmd`-Dateien zur Verfügung:
+* `build.cmd` – Kompiliert den Client und erhöht die Versionsnummer automatisch.
+* `inject.cmd` – Injiziert Qualcord blitzschnell in dein installiertes Discord.
+* `uninject.cmd` – Entfernt Qualcord sauber aus Discord.
+* `dev.cmd` – Startet den Live-Watcher für Entwickler.
+
+---
+
+## 🛠️ Eigene Plugins entwickeln
+
+Öffne in Discord einfach die **Qualcord-Einstellungen** und klicke auf **`[ ⚡ Live Plugin Studio ]`**. 
+
+Du kannst dort direkt JavaScript/TypeScript-Code schreiben:
+```javascript
+export default definePlugin({
+    name: "MeinPlugin",
+    description: "Mein erstes Discord Plugin",
+    start() {
+        showToast("Mein Plugin läuft live!", { variant: "success" });
+    },
+    stop() {
+        showToast("Plugin gestoppt.");
+    }
+});
 ```
+Klicke auf **▶ Live Ausführen & Testen** – dein Code läuft sofort im Discord-Client, ohne Neustart!
 
-After building Equicord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser’s guide for installing custom extensions, if supported.
+---
 
-Note: Firefox extension zip requires Firefox for developers
+## 👥 Credits & Danksagung
 
-## Credits
-
-Thank you to [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord) & [Suncord](https://github.com/verticalsync/Suncord) by [verticalsync](https://github.com/verticalsync) for helping when needed.
-
-## Star History
-
-<a href="https://star-history.com/#Equicord/Equicord&Timeline">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&theme=dark&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-  </picture>
-</a>
-
-## Disclaimer
-
-Discord is trademark of Discord Inc., and solely mentioned for the sake of descriptivity.
-Mentioning it does not imply any affiliation with or endorsement by Discord Inc.
-Vencord is not connected to Equicord and as such, all donation links go to Vendicated's donation link.
-
-<details>
-<summary>Using Equicord violates Discord's terms of service</summary>
-
-Client modifications are against Discord’s Terms of Service.
-
-However, Discord is pretty indifferent about them and there are no known cases of users getting banned for using client mods! So you should generally be fine if you don’t use plugins that implement abusive behaviour. But no worries, all inbuilt plugins are safe to use!
-
-Regardless, if your account is essential to you and getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Equicord), just to be safe.
-
-Additionally, make sure not to post screenshots with Equicord in a server where you might get banned for it.
-
-</details>
+Qualcord basiert auf und dankt den Open-Source-Projekten:
+* [Vencord](https://github.com/Vendicated/Vencord) von Vendicated & Mitwirkenden
+* [Equicord](https://github.com/Equicord/Equicord) & Suncord
+* [Qualcord Team](https://github.com/quadled) & Community
