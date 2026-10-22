@@ -33,6 +33,7 @@ import { Logger } from "@utils/Logger";
 import { onlyOnce } from "@utils/onlyOnce";
 import { canonicalizeFind, canonicalizeReplacement } from "@utils/patches";
 import { DefinedSettings, Patch, Plugin, PluginDef, PluginSettingDef, ReporterTestable, StartAt } from "@utils/types";
+import { isSystemDefaultPlugin, isSystemRequiredPlugin } from "../qualcordDefaults";
 import { FluxEvents } from "@vencord/discord-types";
 import { FluxDispatcher } from "@webpack/common";
 import { patches } from "@webpack/patcher";
@@ -55,15 +56,17 @@ let enabledPluginsSubscribedFlux = false;
 const subscribedFluxEventsPlugins = new Set<string>();
 
 export function isPluginEnabled(p: string) {
-    return (
-        Plugins[p]?.required ||
-        Plugins[p]?.isDependency ||
-        Settings.plugins[p]?.enabled
-    ) ?? false;
+    if (Plugins[p]?.required || isSystemRequiredPlugin(p)) return true;
+    if (Plugins[p]?.isDependency) return true;
+    if (typeof Settings.plugins[p]?.enabled === "boolean") {
+        return Settings.plugins[p].enabled;
+    }
+    return isSystemDefaultPlugin(p);
 }
 export function isPluginRequired(p: string) {
     return (
-        Plugins[p]?.required
+        Plugins[p]?.required ||
+        isSystemRequiredPlugin(p)
     ) ?? false;
 }
 

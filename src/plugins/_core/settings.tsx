@@ -17,6 +17,8 @@ import {
     VencordTab,
 } from "@components/settings";
 import { gitHashShort } from "@shared/vencordUserAgent";
+import { QUALCORD_LOGO } from "../../qualcordLogo";
+import { QUALCORD_VERSION } from "../../qualcordVersion";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
@@ -98,10 +100,10 @@ interface SettingsLayoutBuilder {
 const settings = definePluginSettings({
     settingsLocation: {
         type: OptionType.SELECT,
-        description: "Where to put the Equicord settings section",
+        description: "Where to put the Qualcord settings section",
         options: [
-            { label: "At the very top", value: "top" },
-            { label: "Above Billing section", value: "aboveNitro", default: true },
+            { label: "At the very top (Qualcord Standard)", value: "top", default: true },
+            { label: "Above Billing section", value: "aboveNitro" },
             { label: "Below Billing section", value: "belowNitro" },
             { label: "Above Games & Apps Settings", value: "aboveActivity" },
             { label: "Below Games & Apps Settings", value: "belowActivity" },
@@ -110,7 +112,7 @@ const settings = definePluginSettings({
     },
     includeVencordInfoWhenCopying: {
         type: OptionType.BOOLEAN,
-        description: "Also copy Equicord info (Equicord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
+        description: "Also copy Qualcord info (Qualcord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
         default: true
     }
 });
@@ -189,30 +191,42 @@ export default definePlugin({
 
         const { buildEntry } = this;
 
+        const QualcordSidebarIcon = () => (
+            <img
+                src={QUALCORD_LOGO}
+                alt="Qualcord"
+                width={18}
+                height={18}
+                style={{ borderRadius: "50%", verticalAlign: "middle" }}
+            />
+        );
+
         const equicordEntries: SettingsLayoutNode[] = [
             buildEntry({
                 key: "equicord_main",
-                title: "Equicord",
-                panelTitle: "Equicord Settings",
+                title: "Qualcord",
+                panelTitle: "Qualcord Settings",
                 Component: VencordTab,
-                Icon: MainSettingsIcon
+                Icon: QualcordSidebarIcon as any
             }),
             buildEntry({
                 key: "equicord_plugins",
                 title: "Plugins",
+                panelTitle: "Qualcord Plugins",
                 Component: PluginsTab,
                 Icon: PluginsIcon
             }),
             buildEntry({
                 key: "equicord_themes",
                 title: "Themes",
+                panelTitle: "Qualcord Themes",
                 Component: ThemesTab,
                 Icon: PaintbrushIcon
             }),
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
                 key: "equicord_updater",
                 title: "Updater",
-                panelTitle: "Equicord Updater",
+                panelTitle: "Qualcord Updater",
                 Component: UpdaterTab,
                 Icon: UpdaterIcon
             }),
@@ -225,13 +239,14 @@ export default definePlugin({
             buildEntry({
                 key: "equicord_cloud",
                 title: "Cloud",
-                panelTitle: "Equicord Cloud",
+                panelTitle: "Qualcord Cloud",
                 Component: CloudTab,
                 Icon: CloudIcon
             }),
             buildEntry({
                 key: "equicord_backup_restore",
                 title: "Backup & Restore",
+                panelTitle: "Qualcord Backup & Restore",
                 Component: BackupAndRestoreTab,
                 Icon: BackupRestoreIcon
             }),
@@ -247,11 +262,11 @@ export default definePlugin({
         const equicordSection: SettingsLayoutNode = {
             key: "equicord_section",
             type: LayoutTypes.SECTION,
-            useTitle: () => "Equicord Settings",
+            useTitle: () => "Qualcord",
             buildLayout: () => equicordEntries
         };
 
-        const { settingsLocation } = settings.store;
+        const { settingsLocation = "top" } = settings.store;
 
         const places: Record<SettingsLocation, string> = {
             top: "user_section",
@@ -266,7 +281,7 @@ export default definePlugin({
         let idx = layout.findIndex(s => typeof s?.key === "string" && s.key === key);
 
         if (idx === -1) {
-            idx = 2;
+            idx = 0;
         } else if (settingsLocation.startsWith("below")) {
             idx += 1;
         }
@@ -313,7 +328,7 @@ export default definePlugin({
     getInfoRows() {
         const { electronVersion, chromiumVersion, getVersionInfo } = this;
 
-        const rows = [`Equicord ${gitHashShort}${getVersionInfo()}`];
+        const rows = [`Qualcord v${QUALCORD_VERSION} (${gitHashShort})${getVersionInfo()}`];
 
         if (electronVersion) rows.push(`Electron ${electronVersion}`);
         if (chromiumVersion) rows.push(`Chromium ${chromiumVersion}`);

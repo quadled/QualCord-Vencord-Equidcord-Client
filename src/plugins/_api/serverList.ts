@@ -23,6 +23,7 @@ export default definePlugin({
     name: "ServerListAPI",
     authors: [Devs.kemo],
     description: "Api required for plugins that modify the server list",
+    required: true,
     patches: [
         {
             find: "#{intl::DISCODO_DISABLED}",

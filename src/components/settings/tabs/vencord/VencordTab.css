@@ -52,3 +52,92 @@
     color: var(--text-link);
     display: inline-block;
 }
+
+/* ======================================================== */
+/* Qualcord Custom HTML Dashboard                           */
+/* ======================================================== */
+.qualcord-dashboard {
+    position: relative;
+    padding: 24px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.25) 0%, rgba(138, 43, 226, 0.2) 50%, rgba(20, 20, 30, 0.7) 100%);
+    border: 1px solid rgba(88, 101, 242, 0.35);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+
+.qualcord-dashboard::before {
+    content: "";
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(88, 101, 242, 0.4), transparent 70%);
+    pointer-events: none;
+}
+
+.qualcord-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.qualcord-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.qualcord-badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: #5865F2;
+    color: white;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
+}
+
+.qualcord-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.qualcord-stat-card {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.qualcord-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(88, 101, 242, 0.5);
+    background: rgba(88, 101, 242, 0.08);
+}
+
+.qualcord-stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.qualcord-stat-label {
+    font-size: 12px;
+    color: #b5bac1;
+    font-weight: 500;
+}

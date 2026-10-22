@@ -16,8 +16,8 @@ import { PluginCards } from "./pluginCards";
 let clicked = false;
 
 export default definePlugin({
-    name: "EquicordHelper",
-    description: "Used to provide support and fix discord caused crashes.",
+    name: "Qualcord",
+    description: "Stellt Kernfunktionen für Qualcord bereit und verhindert Discord-Crashes.",
     tags: ["Utility"],
     dependencies: ["MessageAccessoriesAPI"],
     authors: [

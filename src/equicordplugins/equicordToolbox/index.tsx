@@ -73,10 +73,10 @@ function VencordPopoutButton() {
     );
 }
 
-migratePluginSettings("EquicordToolbox", "VencordToolbox");
+migratePluginSettings("QualcordToolbox", "EquicordToolbox");
 export default definePlugin({
-    name: "EquicordToolbox",
-    description: "Adds a button next to the inbox button in the channel header that houses Equicord quick actions",
+    name: "QualcordToolbox",
+    description: "Fügt einen Button neben dem Posteingang in der Kopfzeile hinzu, der Qualcord-Schnellaktionen enthält",
     tags: ["Voice", "Accessibility"],
     authors: [Devs.Ven, Devs.AutumnVN],
     dependencies: ["HeaderBarAPI"],

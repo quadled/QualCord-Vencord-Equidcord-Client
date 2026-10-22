@@ -328,15 +328,15 @@ export default definePlugin({
 
     commands: [
         {
-            name: "equicord-debug",
-            description: "Send Equicord debug info",
+            name: "qualcord-debug",
+            description: "Send Qualcord debug info",
             // @ts-ignore
             predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => ({ content: await generateDebugInfoMessage() })
         },
         {
-            name: "equicord-plugins",
-            description: "Send Equicord plugin list",
+            name: "qualcord-plugins",
+            description: "Send Qualcord plugin list",
             // @ts-ignore
             predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => {

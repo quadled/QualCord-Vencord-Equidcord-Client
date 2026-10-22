@@ -23,7 +23,7 @@ import "../checkNodeVersion.js";
 
 import { exec, execSync } from "child_process";
 import esbuild, { build, context } from "esbuild";
-import { constants as FsConstants, readFileSync } from "fs";
+import { constants as FsConstants, readFileSync, writeFileSync } from "fs";
 import { access, readdir, readFile } from "fs/promises";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { dirname, join, relative, resolve } from "path";
@@ -32,9 +32,31 @@ import { promisify } from "util";
 
 import { getPluginTarget } from "../utils.mjs";
 
-const PackageJSON = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../package.json"), "utf-8"));
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), "../..");
+const VERSION_FILE = join(ROOT_DIR, "version.json");
+const PackageJSON = JSON.parse(readFileSync(join(ROOT_DIR, "package.json"), "utf-8"));
 
-export const VERSION = PackageJSON.version;
+let qualcordVersion = PackageJSON.version || "1.0.0";
+let qualcordBuild = 1;
+
+try {
+    const vData = JSON.parse(readFileSync(VERSION_FILE, "utf-8"));
+    if (vData.autoIncrement !== false) {
+        vData.build = (vData.build || 0) + 1;
+        vData.patch = (vData.patch || 0) + 1;
+        vData.version = `${vData.major || 1}.${vData.minor || 0}.${vData.patch}`;
+        writeFileSync(VERSION_FILE, JSON.stringify(vData, null, 2) + "\n", "utf-8");
+    }
+    qualcordVersion = vData.version;
+    qualcordBuild = vData.build;
+
+    const tsContent = `/* Automatisch generiert durch version.json */\nexport const QUALCORD_VERSION = "${qualcordVersion}";\nexport const QUALCORD_BUILD = ${qualcordBuild};\n`;
+    writeFileSync(join(ROOT_DIR, "src/qualcordVersion.ts"), tsContent, "utf-8");
+} catch (e) {
+    console.warn("Could not read/update version.json:", e.message);
+}
+
+export const VERSION = qualcordVersion;
 // https://reproducible-builds.org/docs/source-date-epoch/
 export const BUILD_TIMESTAMP = Number(process.env.SOURCE_DATE_EPOCH) * 1000 || Date.now();
 

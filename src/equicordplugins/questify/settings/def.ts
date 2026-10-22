@@ -31,7 +31,7 @@ export const defaultQuestOrder = ["UNCLAIMED", "CLAIMED", "IGNORED", "EXPIRED"] 
 export const defaultHiddenQuestStatuses: QuestOrderStatus[] = [];
 
 export const defaultQuestButtonBadgeColor = defaultQuestTileUnclaimedColor;
-export const defaultQuestButtonDisplay: QuestButtonDisplayMode = "always";
+export const defaultQuestButtonDisplay: QuestButtonDisplayMode = "never";
 export const defaultQuestButtonIndicator: QuestButtonIndicatorMode = "both";
 export const defaultLeftClickAction: QuestButtonAction = "open-quests";
 export const defaultMiddleClickAction: QuestButtonAction = "plugin-settings";

@@ -24,6 +24,7 @@ import nativeTitleBarStyles from "./nativeTitleBar.css?managed";
 
 export * as Api from "./api";
 export * as Plugins from "./api/PluginManager";
+export * as LivePlugins from "./api/LivePlugins";
 export * as Components from "./components";
 export * as Util from "./utils";
 export * as Updater from "./utils/updater";
@@ -43,6 +44,8 @@ import { NotificationData, showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
 import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
+import { initLivePlugins } from "./api/LivePlugins";
+import { initQualcordCommunity } from "./qualcordCommunity";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
@@ -158,7 +161,7 @@ async function runUpdateCheck() {
         notifiedForUpdatesThisSession = true;
 
         showNotice(
-            "A new version of Equicord is available!",
+            "A new version of Qualcord is available!",
             "View Update",
             () => openSettingsTabModal(UpdaterTab!)
         );
@@ -170,6 +173,14 @@ async function runUpdateCheck() {
 async function init() {
     await onceReady;
     startAllPlugins(StartAt.WebpackReady);
+
+    // Qualcord Live Plugin Studio & Community Features
+    try {
+        initLivePlugins();
+        initQualcordCommunity();
+    } catch (e) {
+        console.error("[Qualcord] Error initializing live plugins or community:", e);
+    }
 
     syncSettings();
 
@@ -200,6 +211,15 @@ initPluginManager();
 initStyles();
 startAllPlugins(StartAt.Init);
 init();
+
+try {
+    (window as any).Qualcord = (window as any).Vencord;
+    console.log(
+        "%c Qualcord %c Geladen mit eigenen Plugins ",
+        "background: #5865F2; color: #ffffff; font-weight: bold; padding: 3px 6px; border-radius: 3px 0 0 3px;",
+        "background: #23272A; color: #5865F2; font-weight: bold; padding: 3px 6px; border-radius: 0 3px 3px 0;"
+    );
+} catch {}
 
 document.addEventListener("DOMContentLoaded", () => {
     startAllPlugins(StartAt.DOMContentLoaded);

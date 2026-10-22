@@ -43,11 +43,13 @@ import { Alerts, lodash, Parser, React, SearchableSelect, Select, showToast, Tex
 import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
+import { isSystemRequiredPlugin } from "../../../../qualcordDefaults";
 
 import { PluginCard } from "./PluginCard";
 import { openWarningModal } from "./PluginModal";
 import { StockPluginsCard, UserPluginsCard } from "./PluginStatCards";
 import { UIElementsButton } from "./UIElements";
+import { openLivePluginStudio } from "@components/settings";
 
 export const cl = classNameFactory("vc-plugins-");
 export const logger = new Logger("PluginSettings", "#a6d189");
@@ -274,11 +276,11 @@ export default function PluginSettings() {
 
             if (!pluginFilter(p, newPluginsSet)) continue;
 
-            const isRequired = p.required || p.isDependency || depMap[p.name]?.some(d => settings.plugins[d].enabled);
+            const isRequired = p.required || isSystemRequiredPlugin(p.name) || p.isDependency || depMap[p.name]?.some(d => settings.plugins[d].enabled);
 
             if (isRequired) {
-                const tooltipText = p.required || !depMap[p.name]
-                    ? "This plugin is required for Equicord to function."
+                const tooltipText = p.required || isSystemRequiredPlugin(p.name) || !depMap[p.name]
+                    ? "Dieses Plugin ist ein fester System-Bestandteil von Qualcord."
                     : <PluginDependencyList deps={depMap[p.name]?.filter(d => settings.plugins[d].enabled)} />;
 
                 requiredPlugins.push(
@@ -394,8 +396,32 @@ export default function PluginSettings() {
                 />
             </div>
 
-            <div className={cl("ui-elements")}>
-                <UIElementsButton />
+            <div className={cl("ui-elements")} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <div style={{ flex: 1 }}>
+                    <UIElementsButton />
+                </div>
+                <Button
+                    variant="primary"
+                    size="small"
+                    onClick={openLivePluginStudio}
+                    style={{
+                        background: "linear-gradient(135deg, #5865F2, #8A2BE2)",
+                        color: "#ffffff",
+                        fontWeight: "bold",
+                        border: "none",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        padding: "0 18px",
+                        height: "44px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 10px rgba(88, 101, 242, 0.35)",
+                        whiteSpace: "nowrap"
+                    }}
+                >
+                    ⚡ Live Plugin Studio
+                </Button>
             </div>
 
             <HeadingTertiary className={classes(Margins.top20, Margins.bottom8)}>
@@ -420,10 +446,10 @@ export default function PluginSettings() {
                             { label: "Show Favorites", value: SearchStatus.FAVORITES },
                             { label: "Show Enabled", value: SearchStatus.ENABLED },
                             { label: "Show Disabled", value: SearchStatus.DISABLED },
-                            { label: "Show Equicord", value: SearchStatus.EQUICORD },
+                            { label: "Show Qualcord", value: SearchStatus.EQUICORD },
                             { label: "Show Vencord", value: SearchStatus.VENCORD },
                             { label: "Show New", value: SearchStatus.NEW },
-                            hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },
+                            hasUserPlugins && { label: "Show Eigene Plugins", value: SearchStatus.USER_PLUGINS },
                             { label: "Show API Plugins", value: SearchStatus.API_PLUGINS },
                         ].filter(isTruthy)}
                         serialize={String}

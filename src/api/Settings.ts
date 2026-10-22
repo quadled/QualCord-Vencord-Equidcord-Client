@@ -23,6 +23,7 @@ import { DefinedSettings, OptionType, SettingsChecks, SettingsDefinition } from 
 import { React, useEffect } from "@webpack/common";
 
 import plugins from "~plugins";
+import { isSystemDefaultPlugin, isSystemRequiredPlugin } from "../qualcordDefaults";
 
 const logger = new Logger("Settings");
 
@@ -123,7 +124,12 @@ const DefaultSettings: Settings = {
     windowsMaterial: "none",
     disableMinSize: false,
     nativeTitleBar: false,
-    plugins: {},
+    plugins: {
+        Settings: {
+            enabled: true,
+            settingsLocation: "top"
+        }
+    },
 
     uiElements: {
         chatBarButtons: {},
@@ -161,7 +167,12 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 
         if (path === "plugins" && key in plugins)
             return target[key] = {
-                enabled: IS_REPORTER || plugins[key].required || plugins[key].enabledByDefault || false
+                enabled: IS_REPORTER
+                    || plugins[key].required
+                    || plugins[key].enabledByDefault
+                    || isSystemRequiredPlugin(key)
+                    || isSystemDefaultPlugin(key)
+                    || false
             };
 
         // Since the property is not set, check if this is a plugin's setting and if so, try to resolve

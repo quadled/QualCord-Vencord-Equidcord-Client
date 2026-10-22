@@ -12,12 +12,15 @@ import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, RestartIcon } from "@components/Icons";
+import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, PluginsIcon, RestartIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
-import { openContributorModal, openPluginModal, SettingsTab, wrapTab } from "@components/settings";
+import { openContributorModal, openLivePluginStudio, openPluginModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
+import Plugins, { PluginMeta } from "~plugins";
+import { QUALCORD_LOGO } from "../../../../qualcordLogo";
+import { QUALCORD_VERSION } from "../../../../qualcordVersion";
 import BadgeAPI from "@plugins/_api/badges";
 import SettingsPlugin from "@plugins/_core/settings";
 import { gitRemote } from "@shared/vencordUserAgent";
@@ -55,54 +58,54 @@ function Switches() {
     const Switches = [
         {
             key: "useQuickCss",
-            title: "Enable Custom CSS",
-            description: "Apply your configured QuickCSS"
+            title: "Eigenes CSS (QuickCSS) aktivieren",
+            description: "Wendet deine in QuickCSS definierten Styles an"
         },
         (!IS_WEB && !IS_DISCORD_DESKTOP || !IS_WINDOWS) && {
             key: "mainWindowFrameless",
-            title: "Disable the Main Window Frame",
-            description: "Remove the native window frame for a cleaner look. You can still move the window by dragging the title bar area.",
+            title: "Fensterrahmen des Hauptfensters entfernen",
+            description: "Entfernt den nativen Fensterrahmen für einen modernen, randlosen Look.",
             restartRequired: true,
         },
         !IS_WEB && (!IS_DISCORD_DESKTOP || !IS_WINDOWS
             ? {
                 key: "frameless",
-                title: "Disable All Window Frames",
-                description: "Remove the native window frame for a cleaner look. You can still move the window by dragging the title bar area.",
+                title: "Alle Fensterrahmen entfernen",
+                description: "Entfernt alle Fensterrahmen für einen randlosen Look.",
                 restartRequired: true,
             }
             : {
                 key: "nativeTitleBar",
-                title: "Use Windows' native title bar instead of Discord's custom one",
-                description: "Replace Discord's custom title bar with the standard Windows title bar. This may improve compatibility with some window management tools.",
+                title: "Standard Windows-Titelleiste verwenden",
+                description: "Ersetzt die benutzerdefinierte Discord-Titelleiste durch die Standard-Windows-Leiste.",
                 restartRequired: true,
             }
         ),
         !IS_WEB && {
             key: "transparent",
-            title: "Enable Window Transparency",
-            description: "Make the Discord window transparent. A theme that supports transparency is required or this will do nothing.",
+            title: "Fenstertransparenz aktivieren",
+            description: "Macht das Discord-Fenster transparent (erfordert ein Theme mit Transparenz-Support).",
             restartRequired: true,
             warning: IS_WINDOWS
-                ? "This will stop the window from being resizable and prevents you from snapping the window to screen edges."
-                : "This will stop the window from being resizable.",
+                ? "Das Fenster kann bei aktivierter Transparenz unter Windows nicht mehr an Bildschirmränder angedockt werden."
+                : "Das Fenster kann bei aktivierter Transparenz nicht mehr in der Größe verändert werden.",
         },
         IS_DISCORD_DESKTOP && {
             key: "disableMinSize",
-            title: "Disable Minimum Window Size",
-            description: "Allows you to resize the window to any size, even smaller than Discord's minimum size",
+            title: "Minimale Fenstergröße aufheben",
+            description: "Erlaubt es dir, das Discord-Fenster beliebig klein zu skalieren.",
             restartRequired: true
         },
         !IS_WEB && IS_WINDOWS && {
             key: "winCtrlQ",
-            title: "Register Ctrl+Q as shortcut to close Discord",
-            description: "Add Ctrl+Q as a keyboard shortcut to close Discord. This provides an alternative to Alt+F4 for quickly closing the application.",
+            title: "Strg + Q als Tastenkürzel zum Beenden aktivieren",
+            description: "Ermöglicht das schnelle Schließen von Discord mit Strg + Q.",
             restartRequired: true,
         },
         !IS_WEB && {
             key: "enableReactDevtools",
-            title: "Enable React Developer Tools",
-            description: "Mainly useful for plugin developers. Ignore this if you don't know what it is",
+            title: "React Developer Tools aktivieren",
+            description: "Nützlich für die Entwicklung eigener Plugins und das Untersuchen von Komponenten.",
             restartRequired: true
         },
     ] satisfies Array<false | {
@@ -151,121 +154,168 @@ function Switches() {
 }
 
 function EquicordSettings() {
-    const donateImage = useMemo(() =>
-        Math.random() > 0.5 ? DEFAULT_DONATE_IMAGE : SHIGGY_DONATE_IMAGE,
+    const settings = useSettings(["plugins"]);
+    const activePlugins = useMemo(() =>
+        Object.values(settings.plugins || {}).filter(p => p?.enabled).length,
+        [settings.plugins]
+    );
+    const userPlugins = useMemo(() =>
+        Object.values(PluginMeta || {}).filter(m => m?.userPlugin).length,
         []
     );
 
-    const user = UserStore?.getCurrentUser();
-
     return (
         <SettingsTab>
-            {(isEquicordDonor(user?.id) || isVencordDonor(user?.id)) ? (
-                <SpecialCard
-                    title="Donations"
-                    subtitle="Thank you for donating!"
-                    description={
-                        isEquicordDonor(user?.id) && isVencordDonor(user?.id)
-                            ? "All Vencord users can see your Vencord donor badge, and Equicord users can see your Equicord donor badge. To change your Vencord donor badge, contact @vending.machine. For your Equicord donor badge, make a ticket in Equicord's server."
-                            : isVencordDonor(user?.id)
-                                ? "All Vencord users can see your badge! You can manage your perks by messaging @vending.machine."
-                                : "All Equicord users can see your badge! You can manage your perks by making a ticket in Equicord's server."
-                    }
-                    cardImage={VENNIE_DONATOR_IMAGE}
-                    backgroundImage={DONOR_BACKGROUND_IMAGE}
-                    backgroundColor="#ED87A9"
-                >
-                    <DonateButtonComponent donated={true} />
-                </SpecialCard>
-            ) : (
-                <SpecialCard
-                    title="Support the Project"
-                    description="Please consider supporting the development of Equicord by donating!"
-                    cardImage={donateImage}
-                    backgroundImage={DONOR_BACKGROUND_IMAGE}
-                    backgroundColor="#c3a3ce"
-                >
-                    <DonateButtonComponent />
-                </SpecialCard>
-            )}
-            {isAnyPluginDev(user?.id) && (
-                <SpecialCard
-                    title="Contributions"
-                    subtitle="Thank you for contributing!"
-                    description="Since you've contributed to Equicord you now have a cool new badge!"
-                    cardImage={COZY_CONTRIB_IMAGE}
-                    backgroundImage={CONTRIB_BACKGROUND_IMAGE}
-                    backgroundColor="#EDCC87"
-                >
-                    <Button
-                        variant="none"
-                        size="medium"
-                        type="button"
-                        onClick={() => openContributorModal(user)}
-                        className="vc-contrib-button"
-                    >
-                        <GithubIcon aria-hidden fill={"#000000"} className={"vc-contrib-github"} />
-                        See what you've contributed to
-                    </Button>
-                </SpecialCard>
-            )}
+            {/* Individuelles HTML-Dashboard für Qualcord */}
+            <div className="qualcord-dashboard">
+                <div className="qualcord-header">
+                    <div className="qualcord-title-group">
+                        <img
+                            src={QUALCORD_LOGO}
+                            alt="Qualcord"
+                            width={38}
+                            height={38}
+                            style={{
+                                borderRadius: "50%",
+                                boxShadow: "0 0 14px rgba(138, 43, 226, 0.7)",
+                                border: "2px solid rgba(255, 255, 255, 0.2)",
+                                flexShrink: 0
+                            }}
+                        />
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontSize: "24px", fontWeight: "900", color: "#ffffff", letterSpacing: "-0.5px" }}>
+                                Qualcord
+                            </span>
+                            <span className="qualcord-badge">v{QUALCORD_VERSION}</span>
+                        </div>
+                    </div>
+                    <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.8)", background: "rgba(255, 255, 255, 0.12)", padding: "4px 10px", borderRadius: "20px", fontWeight: 600 }}>
+                        ● System Aktiv
+                    </span>
+                </div>
 
-            <Heading className={Margins.top16}>Quick Actions</Heading>
+                <p style={{ margin: "0 0 16px 0", color: "#dbdee1", fontSize: "14px", lineHeight: "1.5" }}>
+                    Dein maßgeschneiderter Discord-Client mit voller Plugin-Unterstützung und individuellem HTML/CSS-Design.
+                </p>
+
+                {/* Live Stats gerendert in HTML */}
+                <div className="qualcord-stats-grid">
+                    <div className="qualcord-stat-card">
+                        <span className="qualcord-stat-value">{activePlugins}</span>
+                        <span className="qualcord-stat-label">🚀 Aktive Plugins</span>
+                    </div>
+                    <div className="qualcord-stat-card">
+                        <span className="qualcord-stat-value">{userPlugins}</span>
+                        <span className="qualcord-stat-label">📁 Eigene Plugins</span>
+                    </div>
+                    <div className="qualcord-stat-card">
+                        <span className="qualcord-stat-value" style={{ color: "#57F287" }}>Online</span>
+                        <span className="qualcord-stat-label">⚡ Client-Status</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Live Plugin Studio Highlight Banner */}
+            <div
+                style={{
+                    background: "linear-gradient(135deg, rgba(88, 101, 242, 0.25), rgba(138, 43, 226, 0.35))",
+                    border: "1px solid rgba(138, 43, 226, 0.5)",
+                    borderRadius: "10px",
+                    padding: "16px 20px",
+                    marginTop: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px"
+                }}
+            >
+                <div>
+                    <div style={{ fontWeight: 800, fontSize: "16px", color: "#ffffff", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>⚡ Qualcord Live Plugin Studio</span>
+                        <span style={{ fontSize: "10px", background: "#5865F2", color: "#fff", padding: "2px 8px", borderRadius: "10px" }}>NEU</span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#dbdee1", marginTop: "4px" }}>
+                        Programmiere und teste eigene Plugins live in Discord – ohne Neustart mit Sofortausführung!
+                    </div>
+                </div>
+                <button
+                    onClick={openLivePluginStudio}
+                    style={{
+                        background: "linear-gradient(135deg, #5865F2, #8A2BE2)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "10px 18px",
+                        fontWeight: 700,
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 4px 12px rgba(88, 101, 242, 0.4)"
+                    }}
+                >
+                    Studio öffnen
+                </button>
+            </div>
+
+            <Heading className={Margins.top16}>Schnellaktionen</Heading>
             <Paragraph className={Margins.bottom16}>
-                Common actions you might want to perform. These shortcuts give you quick access to frequently used features without navigating through menus.
+                Häufig genutzte Werkzeuge für deinen Client, Themes und Einstellungen.
             </Paragraph>
 
             <QuickActionCard>
                 <QuickAction
-                    Icon={LogIcon}
-                    text="Notification Log"
-                    action={openNotificationLogModal}
+                    Icon={PluginsIcon}
+                    text="Live Plugin Studio"
+                    action={openLivePluginStudio}
                 />
                 <QuickAction
                     Icon={PaintbrushIcon}
-                    text="Edit QuickCSS"
+                    text="QuickCSS bearbeiten"
                     action={() => VencordNative.quickCss.openEditor()}
                 />
                 {!IS_WEB && (
                     <QuickAction
                         Icon={RestartIcon}
-                        text="Relaunch Discord"
+                        text="Discord neu starten"
                         action={relaunch}
                     />
                 )}
                 {!IS_WEB && (
                     <QuickAction
                         Icon={FolderIcon}
-                        text="Open Settings Folder"
+                        text="Themes-Ordner öffnen"
+                        action={() => VencordNative.themes.openFolder()}
+                    />
+                )}
+                {!IS_WEB && (
+                    <QuickAction
+                        Icon={FolderIcon}
+                        text="Einstellungen-Ordner"
                         action={() => VencordNative.settings.openFolder()}
                     />
                 )}
                 <QuickAction
-                    Icon={GithubIcon}
-                    text="View Source Code"
-                    action={() =>
-                        VencordNative.native.openExternal(
-                            "https://github.com/" + gitRemote,
-                        )
-                    }
+                    Icon={LogIcon}
+                    text="Benachrichtigungs-Log"
+                    action={openNotificationLogModal}
                 />
             </QuickActionCard>
 
             <Divider className={Margins.top20} />
 
-            <Heading className={Margins.top20}>Client Settings</Heading>
+            <Heading className={Margins.top20}>Client-Einstellungen</Heading>
             <Paragraph className={Margins.bottom16}>
-                Configure how Equicord behaves and integrates with Discord. These settings affect the Discord client's appearance and behavior.
+                Passe das Verhalten und das Aussehen von Qualcord und Discord an deine Vorlieben an.
             </Paragraph>
             <Notice.Info className={Margins.bottom20} style={{ width: "100%" }}>
-                You can customize where this settings section appears in Discord's settings menu by configuring the{" "}
+                Du kannst festlegen, an welcher Position dieser Einstellungsbereich in der Discord-Leiste angezeigt wird, indem du das{" "}
                 <a
                     role="button"
                     onClick={() => openPluginModal(SettingsPlugin)}
                     style={{ cursor: "pointer", color: "var(--text-link)" }}
                 >
                     Settings Plugin
-                </a>.
+                </a> anpasst.
             </Notice.Info>
 
             <Switches />
@@ -278,7 +328,7 @@ function EquicordSettings() {
     );
 }
 
-export default wrapTab(EquicordSettings, "Equicord Settings");
+export default wrapTab(EquicordSettings, "Qualcord Settings");
 
 export function isEquicordDonor(userId: string): boolean {
     const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);

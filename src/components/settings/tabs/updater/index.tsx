@@ -48,10 +48,10 @@ function EquibopSection() {
     return (
         <Flex className={Margins.bottom20} flexDirection="column" gap="1em">
             <Card variant="brand">
-                <HeadingSecondary>Equibop & Equicord</HeadingSecondary>
-                <Paragraph>Equibop and Equicord are two separate things. This updater is for Equicord.</Paragraph>
+                <HeadingSecondary>Qualcord Updates</HeadingSecondary>
+                <Paragraph>Dieser Updater verwaltet die Aktualisierungen für deinen Qualcord Client.</Paragraph>
                 <Paragraph className={Margins.top8}>
-                    You receive separate popups for Equibop updates. You can also manually update by installing the <Link href="https://equibop.org/install">latest version</Link>.
+                    Du wirst automatisch benachrichtigt, sobald eine neue Aktualisierung für Qualcord bereitsteht.
                 </Paragraph>
             </Card>
 
@@ -88,20 +88,20 @@ function Updater() {
             <EquibopSection />
             <Heading className={Margins.top16}>Update Preferences</Heading>
             <Paragraph className={Margins.bottom20}>
-                Control how Equicord keeps itself up to date. You can choose to update automatically in the background or be notified when new updates are available.
+                Control how Qualcord keeps itself up to date. You can choose to update automatically in the background or be notified when new updates are available.
             </Paragraph>
 
             <div className="vc-settings-switches">
                 <FormSwitch
                     title="Automatically update"
-                    description="When enabled, Equicord will automatically download and install updates in the background without asking for confirmation. You'll need to restart Discord to apply the changes."
+                    description="When enabled, Qualcord will automatically download and install updates in the background without asking for confirmation. You'll need to restart Discord to apply the changes."
                     value={settings.autoUpdate}
                     onChange={(v: boolean) => settings.autoUpdate = v}
                     hideBorder
                 />
                 <FormSwitch
                     title="Get notified when an automatic update completes"
-                    description="Receive a notification when Equicord finishes downloading an update in the background, so you know when to restart Discord."
+                    description="Receive a notification when Qualcord finishes downloading an update in the background, so you know when to restart Discord."
                     value={settings.autoUpdateNotification}
                     onChange={(v: boolean) => settings.autoUpdateNotification = v}
                     disabled={!settings.autoUpdate}
@@ -113,7 +113,7 @@ function Updater() {
 
             <Heading className={Margins.top20}>Repository</Heading>
             <Paragraph className={Margins.bottom8}>
-                This is the GitHub repository where Equicord fetches updates from.
+                Hier siehst du den aktuellen Build und das Repository deines Qualcord Clients.
             </Paragraph>
             <Paragraph color="text-subtle">
                 {repoPending
@@ -122,7 +122,7 @@ function Updater() {
                         ? "Failed to retrieve - check console"
                         : (
                             <Link href={repo}>
-                                {repo.split("/").slice(-2).join("/")}
+                                {repo.includes("Equicord") ? "Qualcord" : repo.split("/").slice(-2).join("/")}
                             </Link>
                         )
                 }

@@ -15,6 +15,7 @@ import { Plugin } from "@utils/types";
 import { React, showToast } from "@webpack/common";
 
 import { PluginMeta } from "~plugins";
+import { QUALCORD_LOGO } from "../../../../qualcordLogo";
 
 import { openPluginModal } from "./PluginModal";
 
@@ -89,40 +90,64 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
 
     const pluginInfo = [
         {
+            condition: isUserPlugin,
+            src: QUALCORD_LOGO,
+            alt: "Qualcord",
+            title: "Qualcord Eigenes Plugin"
+        },
+        {
             condition: isModifiedPlugin,
-            src: "https://equicord.org/assets/icons/equicord/modified.png",
-            alt: "Modified",
-            title: "Modified Vencord Plugin"
+            src: QUALCORD_LOGO,
+            alt: "Qualcord",
+            title: "Qualcord Modifiziertes Plugin"
         },
         {
             condition: isEquicordPlugin,
-            src: "https://equicord.org/assets/favicon.png",
-            alt: "Equicord",
-            title: "Equicord Plugin"
+            src: QUALCORD_LOGO,
+            alt: "Qualcord",
+            title: "Qualcord Plugin"
         },
         {
             condition: isVencordPlugin,
-            src: "https://equicord.org/assets/icons/vencord/icon-light.png",
-            alt: "Vencord",
-            title: "Vencord Plugin"
-        },
-        {
-            condition: isUserPlugin,
-            src: "https://equicord.org/assets/icons/misc/userplugin.png",
-            alt: "User",
-            title: "User Plugin"
+            src: QUALCORD_LOGO,
+            alt: "Qualcord",
+            title: "Qualcord Plugin"
         }
     ];
 
     const pluginDetails = pluginInfo.find(p => p.condition);
 
-    const sourceBadge = pluginDetails ? (
-        <img
-            src={pluginDetails.src}
-            alt={pluginDetails.alt}
-            className={cl("source")}
-        />
-    ) : null;
+    const sourceBadge = (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span
+                style={{
+                    fontSize: "11px",
+                    color: "var(--text-muted)",
+                    background: "rgba(255, 255, 255, 0.08)",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    userSelect: "all",
+                    whiteSpace: "nowrap"
+                }}
+                title="Klicken zum Kopieren der Plugin-ID"
+                onClick={e => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(plugin.name);
+                    showToast("Plugin-ID kopiert: " + plugin.name);
+                }}
+            >
+                ID: <strong style={{ color: "var(--header-primary)" }}>{plugin.name}</strong>
+            </span>
+            {pluginDetails ? (
+                <img
+                    src={pluginDetails.src}
+                    alt={pluginDetails.alt}
+                    className={cl("source")}
+                />
+            ) : null}
+        </div>
+    );
 
     const tooltip = pluginDetails?.title || "Unknown Plugin";
 

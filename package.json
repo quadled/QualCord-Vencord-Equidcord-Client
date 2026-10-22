@@ -1,8 +1,8 @@
 {
-    "name": "equicord",
+    "name": "qualcord",
     "private": "true",
-    "version": "1.15.11.0",
-    "description": "The other cutest Discord client mod",
+    "version": "1.0.0",
+    "description": "Qualcord - Your custom Discord client with own plugins",
     "homepage": "https://github.com/Equicord/Equicord#readme",
     "bugs": {
         "url": "https://github.com/Equicord/Equicord/issues"
