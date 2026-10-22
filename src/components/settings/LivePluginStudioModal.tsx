@@ -218,19 +218,24 @@ function LivePluginStudioModal(props: any) {
             <div
                 style={{
                     display: "flex",
-                    height: "640px",
-                    width: "880px",
-                    maxWidth: "92vw",
+                    height: "76vh",
+                    minHeight: "560px",
+                    maxHeight: "860px",
+                    width: "90vw",
+                    maxWidth: "1300px",
+                    minWidth: "750px",
                     background: "#1e1f22",
                     borderRadius: "8px",
                     overflow: "hidden",
-                    border: "1px solid rgba(138, 43, 226, 0.3)"
+                    border: "1px solid rgba(138, 43, 226, 0.35)",
+                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.4)"
                 }}
             >
                 {/* Linke Leiste: Plugin-Liste & Neu-Button */}
                 <div
                     style={{
-                        width: "230px",
+                        width: "240px",
+                        minWidth: "240px",
                         background: "#141518",
                         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
                         display: "flex",
@@ -257,7 +262,7 @@ function LivePluginStudioModal(props: any) {
                             boxShadow: "0 2px 8px rgba(88, 101, 242, 0.4)"
                         }}
                     >
-                        ➕ Neues Plugin erstellen
+                        + Neues Plugin erstellen
                     </button>
 
                     <div style={{ fontSize: "11px", fontWeight: 700, color: "#949ba4", textTransform: "uppercase", marginTop: "4px" }}>
@@ -301,7 +306,7 @@ function LivePluginStudioModal(props: any) {
                 </div>
 
                 {/* Rechter Hauptbereich: Editor & Console */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#1e1f22" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: "#1e1f22" }}>
                     {/* Top Toolbar */}
                     <div
                         style={{
@@ -336,9 +341,9 @@ function LivePluginStudioModal(props: any) {
                                 />
                             </div>
 
-                            <div style={{ width: "230px" }}>
+                            <div style={{ width: "250px" }}>
                                 <label style={{ fontSize: "11px", fontWeight: 700, color: "#b5bac1", display: "block", marginBottom: "4px" }}>
-                                    Vorlage wählen
+                                    Vorlage auswählen
                                 </label>
                                 <select
                                     onChange={e => handleTemplateSelect(e.target.value)}

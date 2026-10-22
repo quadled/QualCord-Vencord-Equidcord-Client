@@ -39,7 +39,7 @@ export const LIVE_PLUGIN_TEMPLATES: Record<string, { title: string; description:
         code: `// Qualcord Live Plugin - Slash Command Template
 export default definePlugin({
     name: "MeinSlashCommand",
-    description: "Fügt den /qualcord Chat-Befehl hinzu",
+    description: "Fuegt den /qualcord Chat-Befehl hinzu",
     authors: [{ name: "Qualcord User" }],
 
     commands: [
@@ -48,9 +48,9 @@ export default definePlugin({
             description: "Gibt eine benutzerdefinierte Qualcord-Nachricht aus",
             inputType: 0, // BUILT_IN
             execute(args, ctx) {
-                showToast("Befehl /qualcord ausgeführt!", { variant: "success" });
+                showToast("Befehl /qualcord ausgefuehrt!", { variant: "success" });
                 return {
-                    content: "⚡ Ausgeführt mit **Qualcord Live Plugin Studio**!"
+                    content: "⚡ Ausgefuehrt mit **Qualcord Live Plugin Studio**!"
                 };
             }
         }
