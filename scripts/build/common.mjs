@@ -254,14 +254,18 @@ export const gitRemotePlugin = {
         build.onLoad({ filter, namespace: "git-remote" }, async () => {
             let remote = process.env.EQUICORD_REMOTE;
             if (!remote) {
-                const res = await promisify(exec)("git remote get-url origin", { encoding: "utf-8" });
-                remote = res.stdout.trim()
-                    .replace("https://github.com/", "")
-                    .replace("git@github.com:", "")
-                    .replace(/.git$/, "");
+                try {
+                    const res = await promisify(exec)("git remote get-url origin", { encoding: "utf-8" });
+                    remote = res.stdout.trim()
+                        .replace("https://github.com/", "")
+                        .replace("git@github.com:", "")
+                        .replace(/\.git$/, "");
+                } catch {
+                    remote = "quadled/QualCord-Vencord-Equidcord-Client";
+                }
             }
 
-            return { contents: `export default "${remote}"` };
+            return { contents: `export default "${remote || "quadled/QualCord-Vencord-Equidcord-Client"}"` };
         });
     }
 };
