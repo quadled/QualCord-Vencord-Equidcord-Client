@@ -227,48 +227,111 @@ export default definePlugin({
     }
 };
 
+// In-memory cache for ultra-fast synchronous access
+let cachedLivePlugins: LivePlugin[] | null = null;
+
 /**
- * Gets all saved live plugins from storage
+ * Gets all saved live plugins from storage (Settings -> DataStore -> localStorage)
  */
 export function getAllLivePlugins(): LivePlugin[] {
+    if (cachedLivePlugins !== null) {
+        return cachedLivePlugins;
+    }
+
+    // 1. Try Settings (persisted to disk settings.json by Equicord)
+    try {
+        const fromSettings = (Settings as any).qualcordLivePlugins;
+        if (Array.isArray(fromSettings) && fromSettings.length > 0) {
+            cachedLivePlugins = [...fromSettings];
+            return cachedLivePlugins;
+        }
+    } catch (e) {
+        logger.warn("Could not read live plugins from Settings:", e);
+    }
+
+    // 2. Try localStorage
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                cachedLivePlugins = parsed;
+                try { (Settings as any).qualcordLivePlugins = parsed; } catch {}
+                return cachedLivePlugins;
+            }
+        }
     } catch (e) {
-        logger.error("Failed to parse live plugins from storage:", e);
-        return [];
+        logger.warn("Could not read live plugins from localStorage:", e);
     }
+
+    // 3. Fallback: Starter plugin so the user always has a functional example
+    cachedLivePlugins = [
+        {
+            id: "starter_slash_command",
+            name: "MeinSlashCommand",
+            description: "Fuegt den /qualcord Chat-Befehl hinzu",
+            author: "Qualcord User",
+            code: LIVE_PLUGIN_TEMPLATES.slashCommand.code,
+            enabled: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        }
+    ];
+
+    try {
+        (Settings as any).qualcordLivePlugins = cachedLivePlugins;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedLivePlugins));
+    } catch {}
+
+    return cachedLivePlugins;
 }
 
 /**
- * Saves a live plugin to persistent storage
+ * Saves a live plugin to persistent storage (Settings, DataStore & localStorage)
  */
-export async function saveLivePlugin(plugin: LivePlugin): Promise<void> {
-    const list = getAllLivePlugins();
-    const idx = list.findIndex(p => p.id === plugin.id);
+export async function saveLivePlugin(plugin: LivePlugin): Promise<LivePlugin[]> {
+    const list = [...getAllLivePlugins()];
+    const idx = list.findIndex(p => p.id === plugin.id || p.name.trim().toLowerCase() === plugin.name.trim().toLowerCase());
     plugin.updatedAt = Date.now();
 
     if (idx >= 0) {
+        plugin.id = list[idx].id; // Keep existing id
         list[idx] = plugin;
     } else {
-        plugin.createdAt ||= Date.now();
+        plugin.createdAt = plugin.createdAt || Date.now();
         list.push(plugin);
     }
 
-    const json = JSON.stringify(list);
-    localStorage.setItem(STORAGE_KEY, json);
+    cachedLivePlugins = list;
 
+    // 1. Save to Settings (triggers auto-save to settings.json on disk)
+    try {
+        (Settings as any).qualcordLivePlugins = [...list];
+    } catch (e) {
+        logger.error("Failed to save live plugins to Settings:", e);
+    }
+
+    // 2. Save to localStorage
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {
+        logger.warn("Failed to save live plugins to localStorage:", e);
+    }
+
+    // 3. Save to DataStore (IndexedDB)
     try {
         await DataStore.set(STORAGE_KEY, list);
-    } catch {}
+    } catch (e) {
+        logger.warn("Failed to save live plugins to DataStore:", e);
+    }
+
+    return list;
 }
 
 /**
  * Deletes a live plugin from storage and unregisters it
  */
-export async function deleteLivePlugin(id: string): Promise<void> {
+export async function deleteLivePlugin(id: string): Promise<LivePlugin[]> {
     const list = getAllLivePlugins();
     const target = list.find(p => p.id === id);
 
@@ -279,11 +342,21 @@ export async function deleteLivePlugin(id: string): Promise<void> {
     }
 
     const filtered = list.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    cachedLivePlugins = filtered;
+
+    try {
+        (Settings as any).qualcordLivePlugins = [...filtered];
+    } catch {}
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    } catch {}
 
     try {
         await DataStore.set(STORAGE_KEY, filtered);
     } catch {}
+
+    return filtered;
 }
 
 /**

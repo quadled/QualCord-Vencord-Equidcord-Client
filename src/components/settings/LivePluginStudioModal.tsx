@@ -12,9 +12,8 @@ import {
     saveLivePlugin,
     stopLivePlugin
 } from "@api/LivePlugins";
-import { Button } from "@components/Button";
 import { copyToClipboard } from "@utils/clipboard";
-import { Modal, openModal, React, Select, showToast, TextInput, useEffect, useMemo, useRef, useState } from "@webpack/common";
+import { Modal, openModal, React, showToast, useEffect, useMemo, useRef, useState } from "@webpack/common";
 
 import { QUALCORD_LOGO } from "../../qualcordLogo";
 import { QUALCORD_VERSION } from "../../qualcordVersion";
@@ -33,6 +32,8 @@ function LivePluginStudioModal(props: any) {
     const [pluginAuthor, setPluginAuthor] = useState("Qualcord User");
     const [code, setCode] = useState(LIVE_PLUGIN_TEMPLATES.slashCommand.code);
 
+    const gutterRef = useRef<HTMLDivElement>(null);
+
     // Live terminal log output
     const [logs, setLogs] = useState<Array<{ text: string; type: "info" | "success" | "error"; time: string; }>>([
         {
@@ -42,10 +43,12 @@ function LivePluginStudioModal(props: any) {
         }
     ]);
 
-    // Select the first plugin if available on load
+    // Load initial plugin on mount
     useEffect(() => {
-        if (plugins.length > 0 && !selectedPluginId) {
-            loadPlugin(plugins[0]);
+        const all = getAllLivePlugins();
+        setPlugins(all);
+        if (all.length > 0) {
+            loadPlugin(all[0]);
         }
     }, []);
 
@@ -59,20 +62,35 @@ function LivePluginStudioModal(props: any) {
     const loadPlugin = (plugin: LivePlugin) => {
         setSelectedPluginId(plugin.id);
         setPluginName(plugin.name);
-        setPluginDesc(plugin.description);
-        setPluginAuthor(plugin.author);
-        setCode(plugin.code);
+        setPluginDesc(plugin.description || "");
+        setPluginAuthor(plugin.author || "Qualcord User");
+        setCode(plugin.code || "");
         addLog(`Plugin '${plugin.name}' geladen.`, "info");
     };
 
-    const handleCreateNew = () => {
-        const newId = "plugin_" + Date.now();
-        setSelectedPluginId(newId);
-        setPluginName("NeuesPlugin" + (plugins.length + 1));
-        setPluginDesc("Mein eigenes Qualcord Plugin");
-        setPluginAuthor("Qualcord User");
-        setCode(LIVE_PLUGIN_TEMPLATES.minimal.code);
-        addLog("Neues Plugin erstellt. Du kannst jetzt live programmieren!", "info");
+    // Create a new plugin and immediately persist it
+    const handleCreateNew = async () => {
+        try {
+            const count = plugins.length + 1;
+            const newPlugin: LivePlugin = {
+                id: "plugin_" + Date.now(),
+                name: "NeuesPlugin" + count,
+                description: "Mein eigenes Qualcord Plugin",
+                author: "Qualcord User",
+                code: LIVE_PLUGIN_TEMPLATES.minimal.code,
+                enabled: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+
+            const updated = await saveLivePlugin(newPlugin);
+            setPlugins(updated);
+            loadPlugin(newPlugin);
+            addLog(`Neues Plugin '${newPlugin.name}' erstellt und gespeichert!`, "success");
+            showToast({ text: `Neues Plugin '${newPlugin.name}' erstellt!`, variant: "success" });
+        } catch (e: any) {
+            addLog(`Fehler beim Erstellen: ${e.message}`, "error");
+        }
     };
 
     const handleTemplateSelect = (key: string) => {
@@ -85,7 +103,7 @@ function LivePluginStudioModal(props: any) {
     };
 
     // Live Run / Test in Discord
-    const handleRunLive = () => {
+    const handleRunLive = async () => {
         addLog(`⚡ Starte '${pluginName}' live in Discord...`, "info");
         const res = executeLivePlugin(code, {
             name: pluginName,
@@ -94,16 +112,13 @@ function LivePluginStudioModal(props: any) {
         });
 
         if (res.success) {
-            addLog(`✅ Plugin '${pluginName}' erfolgreich kompiliert und gestartet!`, "success");
+            addLog(`✅ Plugin '${pluginName}' erfolgreich gestartet & aktiv!`, "success");
             showToast({
                 text: `Plugin '${pluginName}' läuft jetzt live in Discord!`,
                 variant: "success"
             });
-
-            // Update in plugins list if already saved
-            if (selectedPluginId) {
-                handleSave(false);
-            }
+            // Auto-save on successful test run
+            await handleSave(false);
         } else {
             addLog(`❌ Fehler: ${res.error}`, "error");
             showToast({
@@ -126,28 +141,35 @@ function LivePluginStudioModal(props: any) {
 
     // Save Plugin
     const handleSave = async (showToastNotice = true) => {
-        const id = selectedPluginId || "plugin_" + Date.now();
-        const livePlugin: LivePlugin = {
-            id,
-            name: pluginName.trim() || "Unbenannt",
-            description: pluginDesc.trim(),
-            author: pluginAuthor.trim() || "Qualcord User",
-            code,
-            enabled: true,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-        };
+        try {
+            const id = selectedPluginId || "plugin_" + Date.now();
+            const livePlugin: LivePlugin = {
+                id,
+                name: pluginName.trim() || "Unbenannt",
+                description: pluginDesc.trim(),
+                author: pluginAuthor.trim() || "Qualcord User",
+                code,
+                enabled: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
 
-        await saveLivePlugin(livePlugin);
-        const updated = getAllLivePlugins();
-        setPlugins(updated);
-        setSelectedPluginId(id);
+            const updated = await saveLivePlugin(livePlugin);
+            setPlugins(updated);
+            setSelectedPluginId(livePlugin.id);
 
-        if (showToastNotice) {
-            addLog(`💾 Plugin '${livePlugin.name}' dauerhaft gespeichert!`, "success");
+            if (showToastNotice) {
+                addLog(`💾 Plugin '${livePlugin.name}' dauerhaft gespeichert!`, "success");
+                showToast({
+                    text: `Plugin '${livePlugin.name}' gespeichert!`,
+                    variant: "success"
+                });
+            }
+        } catch (e: any) {
+            addLog(`❌ Fehler beim Speichern: ${e.message}`, "error");
             showToast({
-                text: `Plugin '${livePlugin.name}' gespeichert!`,
-                variant: "success"
+                text: "Fehler beim Speichern!",
+                variant: "critical"
             });
         }
     };
@@ -155,16 +177,19 @@ function LivePluginStudioModal(props: any) {
     // Delete Plugin
     const handleDelete = async () => {
         if (!selectedPluginId) return;
-        await deleteLivePlugin(selectedPluginId);
-        const updated = getAllLivePlugins();
-        setPlugins(updated);
-        addLog(`🗑 Plugin gelöscht.`, "info");
-        showToast({ text: "Plugin gelöscht.", variant: "normal" });
+        try {
+            const updated = await deleteLivePlugin(selectedPluginId);
+            setPlugins(updated);
+            addLog("🗑 Plugin gelöscht.", "info");
+            showToast({ text: "Plugin gelöscht.", variant: "normal" });
 
-        if (updated.length > 0) {
-            loadPlugin(updated[0]);
-        } else {
-            handleCreateNew();
+            if (updated.length > 0) {
+                loadPlugin(updated[0]);
+            } else {
+                handleCreateNew();
+            }
+        } catch (e: any) {
+            addLog(`Fehler beim Löschen: ${e.message}`, "error");
         }
     };
 
@@ -186,26 +211,33 @@ function LivePluginStudioModal(props: any) {
         }
     };
 
+    // Synchronize gutter line numbers scrolling with textarea
+    const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+        if (gutterRef.current) {
+            gutterRef.current.scrollTop = e.currentTarget.scrollTop;
+        }
+    };
+
     // Calculate line count for gutter
     const lineCount = useMemo(() => {
-        return Math.max(code.split("\n").length, 12);
+        return Math.max(code.split("\n").length, 14);
     }, [code]);
 
     return (
         <Modal
             {...props}
-            size="dynamic"
+            size="xl"
             title={
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <img
                         src={QUALCORD_LOGO}
                         alt="Qualcord"
-                        width={28}
-                        height={28}
+                        width={26}
+                        height={26}
                         style={{ borderRadius: "50%", boxShadow: "0 0 10px rgba(138, 43, 226, 0.7)" }}
                     />
                     <div>
-                        <div style={{ fontWeight: 800, fontSize: "17px", color: "#ffffff" }}>
+                        <div style={{ fontWeight: 800, fontSize: "16px", color: "#ffffff" }}>
                             Qualcord Live Plugin Studio
                         </div>
                         <div style={{ fontSize: "11px", color: "#a5b4fc" }}>
@@ -218,25 +250,19 @@ function LivePluginStudioModal(props: any) {
             <div
                 style={{
                     display: "flex",
-                    height: "76vh",
-                    minHeight: "560px",
-                    maxHeight: "860px",
-                    width: "90vw",
-                    maxWidth: "1300px",
-                    minWidth: "750px",
+                    width: "100%",
+                    height: "560px",
                     background: "#1e1f22",
-                    borderRadius: "8px",
                     overflow: "hidden",
-                    border: "1px solid rgba(138, 43, 226, 0.35)",
-                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.4)"
+                    borderRadius: "4px"
                 }}
             >
                 {/* Linke Leiste: Plugin-Liste & Neu-Button */}
                 <div
                     style={{
-                        width: "240px",
-                        minWidth: "240px",
-                        background: "#141518",
+                        width: "210px",
+                        minWidth: "210px",
+                        background: "#111214",
                         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
                         display: "flex",
                         flexDirection: "column",
@@ -250,8 +276,8 @@ function LivePluginStudioModal(props: any) {
                             background: "linear-gradient(135deg, #5865F2, #8A2BE2)",
                             color: "#ffffff",
                             border: "none",
-                            borderRadius: "6px",
-                            padding: "9px 12px",
+                            borderRadius: "5px",
+                            padding: "8px 12px",
                             fontWeight: 700,
                             fontSize: "12px",
                             cursor: "pointer",
@@ -259,20 +285,20 @@ function LivePluginStudioModal(props: any) {
                             alignItems: "center",
                             justifyContent: "center",
                             gap: "6px",
-                            boxShadow: "0 2px 8px rgba(88, 101, 242, 0.4)"
+                            boxShadow: "0 2px 8px rgba(88, 101, 242, 0.35)"
                         }}
                     >
-                        + Neues Plugin erstellen
+                        + Neues Plugin
                     </button>
 
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#949ba4", textTransform: "uppercase", marginTop: "4px" }}>
-                        Deine Live Plugins ({plugins.length})
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#949ba4", textTransform: "uppercase", marginTop: "2px" }}>
+                        Plugins ({plugins.length})
                     </div>
 
-                    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "5px" }}>
                         {plugins.length === 0 ? (
                             <div style={{ fontSize: "12px", color: "#80848e", fontStyle: "italic", textAlign: "center", marginTop: "20px" }}>
-                                Noch keine Plugins vorhanden. Klicke auf "Neues Plugin"!
+                                Keine Plugins vorhanden
                             </div>
                         ) : (
                             plugins.map(p => {
@@ -283,19 +309,20 @@ function LivePluginStudioModal(props: any) {
                                         onClick={() => loadPlugin(p)}
                                         style={{
                                             padding: "8px 10px",
-                                            borderRadius: "6px",
+                                            borderRadius: "5px",
                                             cursor: "pointer",
-                                            background: isSelected ? "rgba(138, 43, 226, 0.25)" : "rgba(255, 255, 255, 0.03)",
-                                            border: isSelected ? "1px solid #8A2BE2" : "1px solid transparent",
+                                            background: isSelected ? "#2b2d31" : "#18191c",
+                                            borderLeft: isSelected ? "3px solid #5865F2" : "3px solid transparent",
                                             display: "flex",
                                             flexDirection: "column",
-                                            gap: "2px"
+                                            gap: "2px",
+                                            transition: "background 0.15s ease"
                                         }}
                                     >
-                                        <div style={{ fontWeight: 600, fontSize: "13px", color: isSelected ? "#ffffff" : "#dbdee1" }}>
+                                        <div style={{ fontWeight: 600, fontSize: "12.5px", color: isSelected ? "#ffffff" : "#dbdee1" }}>
                                             {p.name}
                                         </div>
-                                        <div style={{ fontSize: "11px", color: "#949ba4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        <div style={{ fontSize: "10.5px", color: "#949ba4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                             {p.description || "Keine Beschreibung"}
                                         </div>
                                     </div>
@@ -305,17 +332,18 @@ function LivePluginStudioModal(props: any) {
                     </div>
                 </div>
 
-                {/* Rechter Hauptbereich: Editor & Console */}
+                {/* Rechter Hauptbereich: Toolbar, Editor, Console, Action Bar */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: "#1e1f22" }}>
                     {/* Top Toolbar */}
                     <div
                         style={{
                             padding: "10px 14px",
-                            background: "#2b2d31",
+                            background: "#232428",
                             borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                             display: "flex",
                             flexDirection: "column",
-                            gap: "8px"
+                            gap: "8px",
+                            flexShrink: 0
                         }}
                     >
                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -331,17 +359,17 @@ function LivePluginStudioModal(props: any) {
                                     style={{
                                         width: "100%",
                                         padding: "6px 10px",
-                                        background: "#1e1f22",
+                                        background: "#111214",
                                         color: "#ffffff",
                                         border: "1px solid #3b3e45",
                                         borderRadius: "4px",
-                                        fontSize: "13px",
+                                        fontSize: "12.5px",
                                         outline: "none"
                                     }}
                                 />
                             </div>
 
-                            <div style={{ width: "250px" }}>
+                            <div style={{ width: "230px" }}>
                                 <label style={{ fontSize: "11px", fontWeight: 700, color: "#b5bac1", display: "block", marginBottom: "4px" }}>
                                     Vorlage auswählen
                                 </label>
@@ -351,7 +379,7 @@ function LivePluginStudioModal(props: any) {
                                     style={{
                                         width: "100%",
                                         padding: "6px 10px",
-                                        background: "#1e1f22",
+                                        background: "#111214",
                                         color: "#dbdee1",
                                         border: "1px solid #3b3e45",
                                         borderRadius: "4px",
@@ -383,7 +411,7 @@ function LivePluginStudioModal(props: any) {
                                 style={{
                                     width: "100%",
                                     padding: "6px 10px",
-                                    background: "#1e1f22",
+                                    background: "#111214",
                                     color: "#ffffff",
                                     border: "1px solid #3b3e45",
                                     borderRadius: "4px",
@@ -395,20 +423,23 @@ function LivePluginStudioModal(props: any) {
                     </div>
 
                     {/* Code Editor */}
-                    <div style={{ flex: 1, position: "relative", display: "flex", overflow: "hidden", background: "#111214" }}>
+                    <div style={{ flex: 1, minHeight: 0, position: "relative", display: "flex", overflow: "hidden", background: "#18191c" }}>
                         {/* Line Numbers Gutter */}
                         <div
+                            ref={gutterRef}
                             style={{
-                                width: "42px",
-                                background: "#18191c",
-                                borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                                padding: "10px 6px",
+                                width: "38px",
+                                minWidth: "38px",
+                                background: "#111214",
+                                borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                                padding: "8px 4px",
                                 textAlign: "right",
                                 color: "#4e5058",
                                 fontFamily: "Consolas, 'Cascadia Code', monospace",
                                 fontSize: "12px",
                                 lineHeight: "19px",
-                                userSelect: "none"
+                                userSelect: "none",
+                                overflow: "hidden"
                             }}
                         >
                             {Array.from({ length: lineCount }, (_, i) => (
@@ -421,6 +452,7 @@ function LivePluginStudioModal(props: any) {
                             value={code}
                             onChange={e => setCode(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            onScroll={handleScroll}
                             spellCheck={false}
                             style={{
                                 flex: 1,
@@ -428,9 +460,9 @@ function LivePluginStudioModal(props: any) {
                                 background: "transparent",
                                 color: "#f2f3f5",
                                 fontFamily: "Consolas, 'Cascadia Code', 'Fira Code', monospace",
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 lineHeight: "19px",
-                                padding: "10px 14px",
+                                padding: "8px 12px",
                                 border: "none",
                                 resize: "none",
                                 outline: "none",
@@ -440,19 +472,22 @@ function LivePluginStudioModal(props: any) {
                         />
                     </div>
 
-                    {/* Live Console Output Bar */}
+                    {/* Terminal / Output Bar */}
                     <div
                         style={{
-                            height: "100px",
+                            height: "85px",
+                            minHeight: "85px",
+                            maxHeight: "85px",
                             background: "#0c0d0e",
                             borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                            padding: "8px 12px",
+                            padding: "6px 12px",
                             overflowY: "auto",
                             fontFamily: "Consolas, monospace",
-                            fontSize: "11px"
+                            fontSize: "11px",
+                            flexShrink: 0
                         }}
                     >
-                        <div style={{ color: "#72767d", marginBottom: "4px", fontWeight: 700, fontSize: "10px", textTransform: "uppercase" }}>
+                        <div style={{ color: "#72767d", marginBottom: "3px", fontWeight: 700, fontSize: "10px", textTransform: "uppercase" }}>
                             Terminal & Ausgaben:
                         </div>
                         {logs.map((log, i) => (
@@ -460,7 +495,7 @@ function LivePluginStudioModal(props: any) {
                                 key={i}
                                 style={{
                                     color: log.type === "success" ? "#57F287" : log.type === "error" ? "#ED4245" : "#949ba4",
-                                    lineHeight: "16px"
+                                    lineHeight: "15px"
                                 }}
                             >
                                 <span style={{ opacity: 0.6, marginRight: "6px" }}>[{log.time}]</span>
@@ -469,27 +504,28 @@ function LivePluginStudioModal(props: any) {
                         ))}
                     </div>
 
-                    {/* Footer Actions */}
+                    {/* Footer Actions (immer sichtbar und niemals abgeschnitten!) */}
                     <div
                         style={{
-                            padding: "10px 14px",
-                            background: "#232428",
+                            padding: "9px 14px",
+                            background: "#1e1f22",
                             borderTop: "1px solid rgba(255, 255, 255, 0.08)",
                             display: "flex",
                             justifyContent: "space-between",
-                            alignItems: "center"
+                            alignItems: "center",
+                            flexShrink: 0
                         }}
                     >
                         <div style={{ display: "flex", gap: "8px" }}>
                             <button
                                 onClick={handleRunLive}
                                 style={{
-                                    background: "#57F287",
-                                    color: "#000000",
+                                    background: "#23a55a",
+                                    color: "#ffffff",
                                     border: "none",
-                                    borderRadius: "5px",
-                                    padding: "7px 14px",
-                                    fontWeight: 800,
+                                    borderRadius: "4px",
+                                    padding: "6px 14px",
+                                    fontWeight: 700,
                                     fontSize: "12px",
                                     cursor: "pointer",
                                     display: "flex",
@@ -497,7 +533,7 @@ function LivePluginStudioModal(props: any) {
                                     gap: "5px"
                                 }}
                             >
-                                ▶ Live Ausführen & Testen
+                                ▶ Live Ausführen
                             </button>
 
                             <button
@@ -506,8 +542,8 @@ function LivePluginStudioModal(props: any) {
                                     background: "#3b3e45",
                                     color: "#ffffff",
                                     border: "none",
-                                    borderRadius: "5px",
-                                    padding: "7px 12px",
+                                    borderRadius: "4px",
+                                    padding: "6px 12px",
                                     fontWeight: 600,
                                     fontSize: "12px",
                                     cursor: "pointer"
@@ -519,11 +555,11 @@ function LivePluginStudioModal(props: any) {
                             <button
                                 onClick={() => handleSave(true)}
                                 style={{
-                                    background: "linear-gradient(135deg, #5865F2, #8A2BE2)",
+                                    background: "#5865F2",
                                     color: "#ffffff",
                                     border: "none",
-                                    borderRadius: "5px",
-                                    padding: "7px 14px",
+                                    borderRadius: "4px",
+                                    padding: "6px 14px",
                                     fontWeight: 700,
                                     fontSize: "12px",
                                     cursor: "pointer"
@@ -544,13 +580,13 @@ function LivePluginStudioModal(props: any) {
                                     background: "transparent",
                                     color: "#dbdee1",
                                     border: "1px solid #4e5058",
-                                    borderRadius: "5px",
-                                    padding: "6px 12px",
+                                    borderRadius: "4px",
+                                    padding: "5px 10px",
                                     fontSize: "11px",
                                     cursor: "pointer"
                                 }}
                             >
-                                📋 Code Kopieren
+                                📋 Kopieren
                             </button>
 
                             {selectedPluginId && (
@@ -560,8 +596,8 @@ function LivePluginStudioModal(props: any) {
                                         background: "transparent",
                                         color: "#ED4245",
                                         border: "1px solid #ED4245",
-                                        borderRadius: "5px",
-                                        padding: "6px 12px",
+                                        borderRadius: "4px",
+                                        padding: "5px 10px",
                                         fontSize: "11px",
                                         cursor: "pointer"
                                     }}
