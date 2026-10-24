@@ -24,7 +24,7 @@ export function normalizePluginId(id: string): string {
 export const SYSTEM_DEFAULT_PLUGIN_IDS: string[] = [
     // Standardmäßig aktivierte Plugins:
     "MyCustomPlugin",
-    "OrionQuests",
+    "QualQuester",
 ];
 
 /**

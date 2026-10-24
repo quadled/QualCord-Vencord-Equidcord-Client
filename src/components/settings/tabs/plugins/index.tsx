@@ -116,8 +116,8 @@ export const ExcludedReasons: Record<PluginTarget, string> = {
     vesktop: "Vesktop/Equibop apps",
     equibop: "Vesktop/Equibop apps",
     web: "Vesktop/Equibop apps & Discord web",
-    dev: "Developer version of Equicord",
-    browser: "Web Browser version of Equicord"
+    dev: "Developer version of Qualcord",
+    browser: "Web Browser version of Qualcord"
 };
 
 function ExcludedPluginsList({ search }: { search: string; }) {
@@ -218,7 +218,7 @@ export default function PluginSettings() {
                 if (!isPluginEnabled(plugin.name)) return false;
                 break;
             case SearchStatus.EQUICORD:
-                if (!PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/qualcordplugins/") && !PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
                 break;
             case SearchStatus.VENCORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;

@@ -70,11 +70,11 @@ if (!IS_COMPANION_TEST && process.argv.includes("--companion-test"))
     console.error("--companion-test must be run with --reporter for any effect");
 
 export const IS_UPDATER_DISABLED = process.argv.includes("--disable-updater");
-export const gitHash = process.env.EQUICORD_HASH || execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
+export const gitHash = process.env.QUALCORD_HASH || process.env.EQUICORD_HASH || execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
 
 export const banner = {
     js: `
-// Equicord ${gitHash}
+// Qualcord ${gitHash}
 // Standalone: ${IS_STANDALONE}
 // Platform: ${IS_STANDALONE === false ? process.platform : "Universal"}
 // Updater Disabled: ${IS_UPDATER_DISABLED}
@@ -169,7 +169,7 @@ export const globPlugins = kind => ({
         });
 
         build.onLoad({ filter, namespace: "import-plugins" }, async () => {
-            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "equicordplugins/_api", "equicordplugins/_core", "equicordplugins", "userplugins"];
+            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "qualcordplugins/_api", "qualcordplugins/_core", "qualcordplugins", "equicordplugins/_api", "equicordplugins/_core", "equicordplugins", "userplugins"];
             let code = "";
             let pluginsCode = "\n";
             let metaCode = "\n";

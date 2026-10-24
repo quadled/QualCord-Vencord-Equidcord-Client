@@ -19,7 +19,7 @@
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { getCustomColorString } from "@equicordplugins/customUserColors";
+import { getCustomColorString } from "@qualcordplugins/customUserColors";
 import showMeYourName from "@plugins/showMeYourName";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";

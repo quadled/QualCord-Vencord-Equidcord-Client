@@ -164,7 +164,7 @@ function QualcordUpdateModal(props: any) {
                 {/* Features Tab */}
                 {activeTab === "features" && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {/* Feature 1: Orion Quests */}
+                        {/* Feature 1: QualQuester */}
                         <div
                             style={{
                                 background: "rgba(255, 255, 255, 0.03)",
@@ -179,12 +179,12 @@ function QualcordUpdateModal(props: any) {
                         >
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <div style={{ fontWeight: 800, fontSize: "14px", color: "#ffffff", display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <span>⚡ Orion Quests in der Titelleiste</span>
+                                    <span>⚡ QualQuester in der Titelleiste</span>
                                     <span style={{ background: "#5865F2", color: "#fff", fontSize: "10px", padding: "1px 6px", borderRadius: "8px" }}>NEU</span>
                                 </div>
                             </div>
                             <div style={{ fontSize: "12.5px", color: "#dbdee1", lineHeight: "1.45" }}>
-                                Oben rechts in der Discord-Titelleiste (neben der Hilfe) findest du jetzt das neue Quest-Icon. Ein Klick startet den automatischen Quest-Completer, der Video-, Game-, Streaming- und Aktivitäts-Quests automatisch erledigt und Belohnungen abholt! Funktioniert auch via Chat-Befehl <code>/orion</code>.
+                                Oben rechts in der Discord-Titelleiste (neben der Hilfe) findest du jetzt das neue Quest-Icon. Ein Klick startet den automatischen Quest-Completer QualQuester, der Video-, Game-, Streaming- und Aktivitäts-Quests automatisch erledigt und Belohnungen abholt! Funktioniert auch via Chat-Befehl <code>/qualquester</code>.
                             </div>
                         </div>
 

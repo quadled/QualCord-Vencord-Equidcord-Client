@@ -1176,6 +1176,8 @@ export function EquicordIcon(props: IconProps) {
     );
 }
 
+export const QualcordIcon = EquicordIcon;
+
 export function UserIcon(props: IconProps) {
     return (
         <Icon

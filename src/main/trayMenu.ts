@@ -82,14 +82,14 @@ const notify = (window: BaseWindow | undefined, title: string, message: string) 
 function createVencordMenuItems(): MenuItemConstructorOptions[] {
     return [
         {
-            label: "Equicord",
+            label: "Qualcord",
             submenu: [
                 {
-                    label: "About Equicord",
+                    label: "Über Qualcord",
                     click: () => openAboutWindow()
                 },
                 {
-                    label: "Update Equicord",
+                    label: "Qualcord aktualisieren",
                     async click(_item, window) {
                         try {
                             const updateAvailable = await updater.fetchUpdate();
@@ -128,7 +128,7 @@ export function patchTrayMenu(): void {
     const originalBuildFromTemplate = Menu.buildFromTemplate;
 
     Menu.buildFromTemplate = function (template: MenuItemConstructorOptions[]) {
-        const alreadyPatched = template.some(item => item.label === "Equicord");
+        const alreadyPatched = template.some(item => item.label === "Qualcord" || item.label === "Equicord");
         if (isTrayMenu(template) && !alreadyPatched) {
             const insertIndex = findInsertIndex(template);
             const vencordItems = createVencordMenuItems();

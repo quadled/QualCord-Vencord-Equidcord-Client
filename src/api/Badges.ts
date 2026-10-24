@@ -17,7 +17,7 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import globalBadges from "@equicordplugins/globalBadges";
+import globalBadges from "@qualcordplugins/globalBadges";
 import BadgeAPIPlugin from "@plugins/_api/badges";
 import { ComponentType, HTMLProps } from "react";
 

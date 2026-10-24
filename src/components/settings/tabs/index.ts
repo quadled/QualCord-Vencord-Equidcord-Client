@@ -16,4 +16,5 @@ export { default as BackupAndRestoreTab } from "./sync/BackupAndRestoreTab";
 export { default as CloudTab } from "./sync/CloudTab";
 export { default as ThemesTab } from "./themes";
 export { default as UpdaterTab } from "./updater";
-export { default as VencordTab } from "./vencord";
+export { default as QualcordTab } from "./qualcord";
+export { default as VencordTab } from "./qualcord";

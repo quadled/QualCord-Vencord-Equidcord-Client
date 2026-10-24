@@ -59,7 +59,11 @@
             "@webpack/types": [
                 "./src/webpack/types"
             ],
+            "@qualcordplugins/*": [
+                "./src/qualcordplugins/*"
+            ],
             "@equicordplugins/*": [
+                "./src/qualcordplugins/*",
                 "./src/equicordplugins/*"
             ]
         },

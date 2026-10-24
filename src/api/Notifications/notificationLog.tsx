@@ -19,7 +19,7 @@
 import * as DataStore from "@api/DataStore";
 import { Settings } from "@api/Settings";
 import { Paragraph } from "@components/Paragraph";
-import { openNotificationSettingsModal } from "@components/settings/tabs/vencord/NotificationSettings";
+import { openNotificationSettingsModal } from "@components/settings/tabs/qualcord/NotificationSettings";
 import { classNameFactory } from "@utils/css";
 import { useAwaiter } from "@utils/react";
 import { RenderModalProps } from "@vencord/discord-types";

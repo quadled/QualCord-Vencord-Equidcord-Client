@@ -14,7 +14,7 @@ import {
     PluginsTab,
     ThemesTab,
     UpdaterTab,
-    VencordTab,
+    QualcordTab,
 } from "@components/settings";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { QUALCORD_LOGO } from "../../qualcordLogo";
@@ -206,7 +206,7 @@ export default definePlugin({
                 key: "equicord_main",
                 title: "Qualcord",
                 panelTitle: "Qualcord Settings",
-                Component: VencordTab,
+                Component: QualcordTab,
                 Icon: QualcordSidebarIcon as any
             }),
             buildEntry({

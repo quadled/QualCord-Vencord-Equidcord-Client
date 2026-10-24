@@ -22,10 +22,18 @@ import { join } from "path";
 
 const suffix = IS_DEV ? "dev" : "";
 
-export const DATA_DIR = process.env.EQUICORD_USER_DATA_DIR ?? (
-    process.env.DISCORD_USER_DATA_DIR
-        ? join(process.env.DISCORD_USER_DATA_DIR, "..", "EquicordData", suffix)
-        : join(app.getPath("userData"), "..", "Equicord", suffix)
+const defaultQualcordDir = process.env.DISCORD_USER_DATA_DIR
+    ? join(process.env.DISCORD_USER_DATA_DIR, "..", "QualcordData", suffix)
+    : join(app.getPath("userData"), "..", "Qualcord", suffix);
+
+const legacyEquicordDir = process.env.DISCORD_USER_DATA_DIR
+    ? join(process.env.DISCORD_USER_DATA_DIR, "..", "EquicordData", suffix)
+    : join(app.getPath("userData"), "..", "Equicord", suffix);
+
+export const DATA_DIR = process.env.QUALCORD_USER_DATA_DIR ?? process.env.EQUICORD_USER_DATA_DIR ?? (
+    existsSync(defaultQualcordDir) || !existsSync(legacyEquicordDir)
+        ? defaultQualcordDir
+        : legacyEquicordDir
 );
 
 export const SETTINGS_DIR = join(DATA_DIR, "settings");
@@ -68,7 +76,7 @@ if (IS_DEV) {
                 app.relaunch();
                 app.exit(0);
             } catch (err) {
-                console.error("[Equicord] Failed to copy prod data:", err);
+                console.error("[Qualcord] Failed to copy prod data:", err);
             }
         }, 5000);
     }
