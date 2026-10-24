@@ -17,8 +17,11 @@
 */
 
 import { execFile as cpExecFile } from "child_process";
+import { existsSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
+
+import gitRemote from "~git-remote";
 
 import { Updater } from ".";
 
@@ -29,26 +32,48 @@ const execFile = promisify(cpExecFile);
 
 const isFlatpak = process.platform === "linux" && !!process.env.FLATPAK_ID;
 
-if (process.platform === "darwin") process.env.PATH = `/usr/local/bin:${process.env.PATH}`;
+// Ensure Git executable is discoverable on Windows & macOS
+if (process.platform === "darwin") {
+    process.env.PATH = `/usr/local/bin:${process.env.PATH}`;
+} else if (process.platform === "win32") {
+    const gitPaths = [
+        "C:\\Program Files\\Git\\cmd",
+        "C:\\Program Files\\Git\\bin",
+        "C:\\Program Files (x86)\\Git\\cmd",
+        "C:\\Program Files (x86)\\Git\\bin",
+        `${process.env.LOCALAPPDATA}\\Programs\\Git\\cmd`,
+        `${process.env.LOCALAPPDATA}\\Programs\\Git\\bin`
+    ];
+    for (const p of gitPaths) {
+        if (existsSync(p) && !process.env.PATH?.includes(p)) {
+            process.env.PATH = `${p};${process.env.PATH}`;
+        }
+    }
+}
 
 function git(...args: string[]) {
-    const opts = { cwd: VENCORD_SRC_DIR };
+    const cwd = existsSync(join(EQUICORD_DIR, ".git")) ? EQUICORD_DIR : VENCORD_SRC_DIR;
+    const opts = { cwd };
 
     if (isFlatpak) return execFile("flatpak-spawn", ["--host", "git", ...args], opts);
     else return execFile("git", args, opts);
 }
 
 async function getRepo() {
-    const res = await git("remote", "get-url", "origin");
-    return res.stdout.trim()
-        .replace(/git@(.+):/, "https://$1/")
-        .replace(/\.git$/, "");
+    try {
+        const res = await git("remote", "get-url", "origin");
+        const url = res.stdout.trim()
+            .replace(/git@(.+):/, "https://$1/")
+            .replace(/\.git$/, "");
+        if (url) return url;
+    } catch {}
+    return `https://github.com/${gitRemote || "quadled/QualCord-Vencord-Equidcord-Client"}`;
 }
 
 async function calculateGitChanges() {
     await git("fetch");
 
-    const branch = (await git("branch", "--show-current")).stdout.trim();
+    const branch = (await git("branch", "--show-current")).stdout.trim() || "main";
 
     const existsOnOrigin = (await git("ls-remote", "origin", branch)).stdout.length > 0;
     if (!existsOnOrigin) return [];

@@ -3,13 +3,13 @@
     "private": "true",
     "version": "1.0.0",
     "description": "Qualcord - Your custom Discord client with own plugins",
-    "homepage": "https://github.com/Equicord/Equicord#readme",
+    "homepage": "https://github.com/quadled/QualCord-Vencord-Equidcord-Client#readme",
     "bugs": {
-        "url": "https://github.com/Equicord/Equicord/issues"
+        "url": "https://github.com/quadled/QualCord-Vencord-Equidcord-Client/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Equicord/Equicord.git"
+        "url": "git+https://github.com/quadled/QualCord-Vencord-Equidcord-Client.git"
     },
     "license": "GPL-3.0-or-later",
     "author": "Equicord",

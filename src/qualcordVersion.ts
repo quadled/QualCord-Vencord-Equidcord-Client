@@ -1,3 +1,3 @@
 /* Automatisch generiert durch version.json */
-export const QUALCORD_VERSION = "1.0.13";
-export const QUALCORD_BUILD = 14;
+export const QUALCORD_VERSION = "1.0.15";
+export const QUALCORD_BUILD = 16;
