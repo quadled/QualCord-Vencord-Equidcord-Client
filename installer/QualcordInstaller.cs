@@ -25,6 +25,7 @@ namespace QualcordInstaller
         private Button btnInstall;
         private Button btnUninstall;
         private CheckBox chkStartDiscord;
+        private CheckBox chkInstallGit;
         private RichTextBox txtLog;
         private ProgressBar progressBar;
         private Label lblStatus;
@@ -56,7 +57,10 @@ namespace QualcordInstaller
                     if (uninstall)
                         logic.Uninstall(branches[0], null);
                     else
+                    {
+                        logic.EnsureGitInstalled(null);
                         logic.Install(branches[0], true, null);
+                    }
                 }
                 return;
             }
@@ -68,12 +72,13 @@ namespace QualcordInstaller
         {
             InitializeComponent();
             LoadBranches();
+            CheckGitStatus();
         }
 
         private void InitializeComponent()
         {
-            this.Text = "Qualcord 1-Klick Installer (v1.0.9)";
-            this.Size = new Size(540, 480);
+            this.Text = "Qualcord 1-Klick Installer (v1.0.15)";
+            this.Size = new Size(540, 525);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -96,7 +101,7 @@ namespace QualcordInstaller
             pnlHeader.Controls.Add(lblTitle);
 
             Label lblSubtitle = new Label();
-            lblSubtitle.Text = "1-Klick Installation & Mod-Integration fr Discord";
+            lblSubtitle.Text = "1-Klick Installation & Mod-Integration fuer Discord";
             lblSubtitle.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
             lblSubtitle.ForeColor = Color.FromArgb(180, 185, 195);
             lblSubtitle.Location = new Point(24, 48);
@@ -108,14 +113,14 @@ namespace QualcordInstaller
             // Discord Branch Selection
             Label lblBranch = new Label();
             lblBranch.Text = "Discord Version / Pfad:";
-            lblBranch.Location = new Point(24, 100);
+            lblBranch.Location = new Point(24, 98);
             lblBranch.AutoSize = true;
             lblBranch.ForeColor = Color.FromArgb(219, 222, 225);
             this.Controls.Add(lblBranch);
 
             comboDiscordBranch = new ComboBox();
             comboDiscordBranch.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboDiscordBranch.Location = new Point(24, 122);
+            comboDiscordBranch.Location = new Point(24, 120);
             comboDiscordBranch.Width = 475;
             comboDiscordBranch.BackColor = Color.FromArgb(43, 45, 49);
             comboDiscordBranch.ForeColor = Color.White;
@@ -125,7 +130,7 @@ namespace QualcordInstaller
             // Action Buttons
             btnInstall = new Button();
             btnInstall.Text = "⚡ Qualcord in Discord Installieren";
-            btnInstall.Location = new Point(24, 160);
+            btnInstall.Location = new Point(24, 155);
             btnInstall.Size = new Size(310, 42);
             btnInstall.BackColor = Color.FromArgb(88, 101, 242);
             btnInstall.ForeColor = Color.White;
@@ -138,7 +143,7 @@ namespace QualcordInstaller
 
             btnUninstall = new Button();
             btnUninstall.Text = "Deinstallieren";
-            btnUninstall.Location = new Point(345, 160);
+            btnUninstall.Location = new Point(345, 155);
             btnUninstall.Size = new Size(154, 42);
             btnUninstall.BackColor = Color.FromArgb(59, 62, 69);
             btnUninstall.ForeColor = Color.FromArgb(240, 71, 71);
@@ -152,16 +157,25 @@ namespace QualcordInstaller
             // Auto-Start Checkbox
             chkStartDiscord = new CheckBox();
             chkStartDiscord.Text = "Discord nach Installation automatisch starten";
-            chkStartDiscord.Location = new Point(24, 212);
+            chkStartDiscord.Location = new Point(24, 204);
             chkStartDiscord.AutoSize = true;
             chkStartDiscord.Checked = true;
             chkStartDiscord.ForeColor = Color.FromArgb(180, 185, 195);
             this.Controls.Add(chkStartDiscord);
 
+            // Git Auto-Install Checkbox
+            chkInstallGit = new CheckBox();
+            chkInstallGit.Text = "Git fuer Windows automatisch mitinstallieren (Empfohlen)";
+            chkInstallGit.Location = new Point(24, 228);
+            chkInstallGit.AutoSize = true;
+            chkInstallGit.Checked = true;
+            chkInstallGit.ForeColor = Color.FromArgb(254, 231, 92);
+            this.Controls.Add(chkInstallGit);
+
             // Log box
             txtLog = new RichTextBox();
-            txtLog.Location = new Point(24, 242);
-            txtLog.Size = new Size(475, 140);
+            txtLog.Location = new Point(24, 256);
+            txtLog.Size = new Size(475, 150);
             txtLog.BackColor = Color.FromArgb(17, 18, 20);
             txtLog.ForeColor = Color.FromArgb(219, 222, 225);
             txtLog.Font = new Font("Consolas", 8.5F);
@@ -171,7 +185,7 @@ namespace QualcordInstaller
 
             // Progress bar
             progressBar = new ProgressBar();
-            progressBar.Location = new Point(24, 390);
+            progressBar.Location = new Point(24, 416);
             progressBar.Size = new Size(475, 12);
             progressBar.Style = ProgressBarStyle.Continuous;
             this.Controls.Add(progressBar);
@@ -179,11 +193,32 @@ namespace QualcordInstaller
             // Status label
             lblStatus = new Label();
             lblStatus.Text = "Bereit zur Installation.";
-            lblStatus.Location = new Point(24, 408);
+            lblStatus.Location = new Point(24, 434);
             lblStatus.AutoSize = true;
             lblStatus.ForeColor = Color.FromArgb(148, 155, 164);
             lblStatus.Font = new Font("Segoe UI", 8.5F);
             this.Controls.Add(lblStatus);
+        }
+
+        private void CheckGitStatus()
+        {
+            InstallerLogic logic = new InstallerLogic();
+            if (logic.IsGitInstalled())
+            {
+                chkInstallGit.Text = "Git fuer Windows ist bereits installiert (OK)";
+                chkInstallGit.Checked = false;
+                chkInstallGit.Enabled = false;
+                chkInstallGit.ForeColor = Color.FromArgb(87, 242, 135);
+                Log("Git fuer Windows wurde auf dem System erkannt.", Color.LightGreen);
+            }
+            else
+            {
+                chkInstallGit.Text = "Git fuer Windows automatisch installieren (Empfohlen fuer Updates)";
+                chkInstallGit.Checked = true;
+                chkInstallGit.Enabled = true;
+                chkInstallGit.ForeColor = Color.FromArgb(254, 231, 92);
+                Log("Hinweis: Git ist noch nicht installiert. Wird automatisch mitinstalliert.", Color.Yellow);
+            }
         }
 
         private void LoadBranches()
@@ -230,17 +265,36 @@ namespace QualcordInstaller
 
             DiscordBranch selected = (DiscordBranch)comboDiscordBranch.SelectedItem;
             bool autoStart = chkStartDiscord.Checked;
+            bool installGit = chkInstallGit.Checked;
 
             btnInstall.Enabled = false;
             btnUninstall.Enabled = false;
             progressBar.Value = 10;
-            lblStatus.Text = "Installation luft...";
+            lblStatus.Text = "Installation laeuft...";
 
             Thread t = new Thread(() =>
             {
                 try
                 {
                     InstallerLogic logic = new InstallerLogic();
+
+                    // Optional Git auto-install
+                    if (installGit)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            progressBar.Value = 20;
+                            lblStatus.Text = "Richte Git fuer Windows ein...";
+                        }));
+                        logic.EnsureGitInstalled((msg, col) => Log(msg, col));
+                    }
+
+                    this.Invoke(new Action(() =>
+                    {
+                        progressBar.Value = 40;
+                        lblStatus.Text = "Installiere Qualcord in Discord...";
+                    }));
+
                     logic.Install(selected, autoStart, (msg, col) => Log(msg, col));
 
                     this.Invoke(new Action(() =>
@@ -250,6 +304,7 @@ namespace QualcordInstaller
                         Log("🚀 Qualcord ist startklar!", Color.Lime);
                         btnInstall.Enabled = true;
                         btnUninstall.Enabled = true;
+                        CheckGitStatus();
                     }));
                 }
                 catch (Exception ex)
@@ -277,7 +332,7 @@ namespace QualcordInstaller
             btnInstall.Enabled = false;
             btnUninstall.Enabled = false;
             progressBar.Value = 20;
-            lblStatus.Text = "Deinstallation luft...";
+            lblStatus.Text = "Deinstallation laeuft...";
 
             Thread t = new Thread(() =>
             {
@@ -290,7 +345,7 @@ namespace QualcordInstaller
                     {
                         progressBar.Value = 100;
                         lblStatus.Text = "Qualcord erfolgreich deinstalliert.";
-                        Log("Discord wurde in den Originalzustand zurckgesetzt.", Color.LightGreen);
+                        Log("Discord wurde in den Originalzustand zurueckgesetzt.", Color.LightGreen);
                         btnInstall.Enabled = true;
                         btnUninstall.Enabled = true;
                     }));
@@ -316,6 +371,113 @@ namespace QualcordInstaller
     {
         public delegate void LogCallback(string message, Color color);
 
+        public bool IsGitInstalled()
+        {
+            string[] knownPaths = new string[]
+            {
+                @"C:\Program Files\Git\cmd\git.exe",
+                @"C:\Program Files\Git\bin\git.exe",
+                @"C:\Program Files (x86)\Git\cmd\git.exe",
+                @"C:\Program Files (x86)\Git\bin\git.exe",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Git\cmd\git.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Git\bin\git.exe")
+            };
+
+            foreach (string path in knownPaths)
+            {
+                if (File.Exists(path)) return true;
+            }
+
+            string pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (!string.IsNullOrEmpty(pathEnv))
+            {
+                foreach (string dir in pathEnv.Split(';'))
+                {
+                    try
+                    {
+                        if (Directory.Exists(dir) && File.Exists(Path.Combine(dir, "git.exe")))
+                            return true;
+                    }
+                    catch { }
+                }
+            }
+
+            return false;
+        }
+
+        public void EnsureGitInstalled(LogCallback log)
+        {
+            if (log == null) log = (m, c) => { };
+
+            if (IsGitInstalled())
+            {
+                log("Git ist bereits auf dem System vorhanden.", Color.LightGreen);
+                return;
+            }
+
+            log("Git fuer Windows wird automatisch eingerichtet...", Color.LightCyan);
+
+            // 1. Try Windows Package Manager (winget)
+            try
+            {
+                string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string wingetExe = Path.Combine(localApp, @"Microsoft\WindowsApps\winget.exe");
+                string runner = File.Exists(wingetExe) ? wingetExe : "winget.exe";
+
+                log("Installiere via Windows Package Manager (winget)...", Color.LightGray);
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = runner;
+                psi.Arguments = "install --id Git.Git -e --source winget --silent --accept-source-agreements --accept-package-agreements";
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
+                Process p = Process.Start(psi);
+                p.WaitForExit(90000); // 90 seconds timeout
+
+                if (IsGitInstalled())
+                {
+                    log("✅ Git fuer Windows erfolgreich installiert!", Color.LightGreen);
+                    return;
+                }
+            }
+            catch { }
+
+            // 2. Direct download of official Git installer
+            try
+            {
+                log("Lade offiziellen Git for Windows Installer herunter...", Color.LightCyan);
+                string tempInstaller = Path.Combine(Path.GetTempPath(), "Git-64-bit-installer.exe");
+
+                using (WebClient client = new WebClient())
+                {
+                    client.Headers.Add("User-Agent", "QualcordInstaller/1.0");
+                    client.DownloadFile("https://github.com/git-for-windows/git/releases/latest/download/Git-64-bit.exe", tempInstaller);
+                }
+
+                log("Fuehre stille Installation von Git aus (bitte kurz warten)...", Color.LightCyan);
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = tempInstaller;
+                psi.Arguments = "/VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /SUPPRESSMSGBOXES";
+                psi.UseShellExecute = true;
+                Process gp = Process.Start(psi);
+                gp.WaitForExit(180000); // 3 minutes timeout
+
+                try { File.Delete(tempInstaller); } catch { }
+
+                if (IsGitInstalled())
+                {
+                    log("✅ Git fuer Windows erfolgreich installiert!", Color.LightGreen);
+                }
+                else
+                {
+                    log("Git-Installation abgeschlossen.", Color.LightGreen);
+                }
+            }
+            catch (Exception ex)
+            {
+                log("Hinweis zu Git-Installation: " + ex.Message, Color.Orange);
+            }
+        }
+
         public List<DiscordBranch> FindDiscordInstallations()
         {
             List<DiscordBranch> list = new List<DiscordBranch>();
@@ -333,7 +495,6 @@ namespace QualcordInstaller
         {
             if (Directory.Exists(dir))
             {
-                // Verify there is an app-* folder
                 string[] appDirs = Directory.GetDirectories(dir, "app-*");
                 if (appDirs.Length > 0)
                 {
@@ -367,7 +528,7 @@ namespace QualcordInstaller
             log("Verwende Discord Version: " + Path.GetFileName(latestAppDir), Color.LightGray);
 
             // 1. Close Discord if running
-            log("Prfe laufende Discord Prozesse...", Color.LightGray);
+            log("Pruefe laufende Discord Prozesse...", Color.LightGray);
             KillProcesses(procName);
             Thread.Sleep(800);
 

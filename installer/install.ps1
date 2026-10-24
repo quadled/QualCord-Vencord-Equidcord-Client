@@ -35,6 +35,51 @@ if (-not $targetBranch) {
 
 Write-Host "-> Gefundene Discord-Installation: $($targetBranch.Name) ($([System.IO.Path]::GetFileName($latestAppDir)))" -ForegroundColor Green
 
+# 0. Git pruefen & automatisch installieren falls fehlend
+function Test-GitInstalled {
+    if (Get-Command git -ErrorAction SilentlyContinue) { return $true }
+    $knownGitPaths = @(
+        "C:\Program Files\Git\cmd\git.exe",
+        "C:\Program Files\Git\bin\git.exe",
+        "C:\Program Files (x86)\Git\cmd\git.exe",
+        (Join-Path $env:LOCALAPPDATA "Programs\Git\cmd\git.exe")
+    )
+    foreach ($p in $knownGitPaths) {
+        if (Test-Path $p) { return $true }
+    }
+    return $false
+}
+
+if (-not (Test-GitInstalled)) {
+    Write-Host "-> Git fuer Windows nicht gefunden. Installiere automatisch..." -ForegroundColor Cyan
+    $winget = (Get-Command winget.exe -ErrorAction SilentlyContinue)
+    $installed = $false
+    if ($winget) {
+        try {
+            Write-Host "   (Verwende winget...)" -ForegroundColor Gray
+            Start-Process winget -ArgumentList "install --id Git.Git -e --source winget --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+            if (Test-GitInstalled) { $installed = $true }
+        } catch {}
+    }
+    if (-not $installed) {
+        try {
+            Write-Host "   (Lade offiziellen Git Installer herunter...)" -ForegroundColor Gray
+            $gitInstallerPath = Join-Path $env:TEMP "Git-Installer.exe"
+            Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/latest/download/Git-64-bit.exe" -OutFile $gitInstallerPath -UseBasicParsing
+            Write-Host "   (Installiere Git stillschweigend...)" -ForegroundColor Gray
+            Start-Process $gitInstallerPath -ArgumentList "/VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /SUPPRESSMSGBOXES" -Wait
+            Remove-Item $gitInstallerPath -Force -ErrorAction SilentlyContinue
+        } catch {}
+    }
+    if (Test-GitInstalled) {
+        Write-Host "✅ Git wurde erfolgreich installiert!" -ForegroundColor Green
+    } else {
+        Write-Host "ℹ️ Git-Installation uebersprungen. Qualcord funktioniert dank HTTP-Fallback trotzdem!" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "✅ Git ist bereits installiert." -ForegroundColor Green
+}
+
 # 1. Discord beenden falls offen
 Write-Host "-> Schliee laufende Discord Prozesse..." -ForegroundColor Yellow
 Get-Process -Name $targetBranch.Proc -ErrorAction SilentlyContinue | Stop-Process -Force
