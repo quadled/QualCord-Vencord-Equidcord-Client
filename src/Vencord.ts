@@ -149,8 +149,8 @@ async function runUpdateCheck() {
                 notifiedForUpdatesThisSession = true;
 
                 showNotice(
-                    "Equicord has been updated!",
-                    "Restart",
+                    "Qualcord wurde aktualisiert!",
+                    "Neu starten",
                     relaunch
                 );
             }
@@ -161,8 +161,8 @@ async function runUpdateCheck() {
         notifiedForUpdatesThisSession = true;
 
         showNotice(
-            "A new version of Qualcord is available!",
-            "View Update",
+            "Eine neue Version von Qualcord ist verfügbar!",
+            "Update ansehen",
             () => openSettingsTabModal(UpdaterTab!)
         );
     } catch (err) {

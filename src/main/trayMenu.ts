@@ -94,19 +94,19 @@ function createVencordMenuItems(): MenuItemConstructorOptions[] {
                         try {
                             const updateAvailable = await updater.fetchUpdate();
                             if (!updateAvailable) {
-                                return notify(window, "No Update Available", "You are already using the latest version of Equicord.");
+                                return notify(window, "Kein Update verfügbar", "Du nutzt bereits die neueste Version von Qualcord.");
                             }
 
                             const result = await updater.applyUpdate();
                             if (!result) {
-                                return notify(window, "Update Failed", "Failed to apply the update for Equicord.");
+                                return notify(window, "Update fehlgeschlagen", "Fehler beim Anwenden des Updates für Qualcord.");
                             }
 
-                            await notify(window, "Update Successful", "Now relaunching Equicord to apply the update.");
+                            await notify(window, "Update erfolgreich", "Qualcord wird neu gestartet, um das Update anzuwenden.");
                             app.relaunch();
                             app.exit();
                         } catch (e) {
-                            notify(window, "Update Error", `An error occurred while updating Equicord.\n\n${String(e)}`);
+                            notify(window, "Update Fehler", `Ein Fehler ist beim Aktualisieren von Qualcord aufgetreten.\n\n${String(e)}`);
                         }
                     }
                 },

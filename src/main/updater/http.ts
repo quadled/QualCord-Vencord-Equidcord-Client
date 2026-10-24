@@ -1,6 +1,6 @@
 /*
  * Qualcord HTTP Updater
- * Seamlessly checks GitHub API and downloads pre-built Qualcord packages
+ * Seamlessly checks version.json and downloads pre-built Qualcord packages
  * without requiring Git or Node.js.
  */
 
@@ -10,16 +10,16 @@ import { join } from "path";
 import { promisify } from "util";
 
 import { fetchBuffer, fetchJson } from "@main/utils/http";
-import gitHash from "~git-hash";
 import gitRemote from "~git-remote";
 
+import { QUALCORD_BUILD, QUALCORD_VERSION } from "../../qualcordVersion";
 import { UpdateData, Updater } from ".";
 
 const execFile = promisify(cpExecFile);
 
 const REPO = gitRemote || "quadled/QualCord-Vencord-Equidcord-Client";
 const REPO_URL = `https://github.com/${REPO}`;
-const API_COMMITS = `https://api.github.com/repos/${REPO}/commits?per_page=15`;
+const API_COMMITS = `https://api.github.com/repos/${REPO}/commits?per_page=5`;
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main`;
 
 let pendingZipBuffer: Buffer | null = null;
@@ -29,69 +29,93 @@ async function getRepo() {
     return REPO_URL;
 }
 
+function getLocalVersion(): { version: string; build: number } {
+    try {
+        const localVersionFile = join(__dirname, "../../version.json");
+        if (existsSync(localVersionFile)) {
+            const data = JSON.parse(readFileSync(localVersionFile, "utf-8"));
+            if (data?.version) {
+                return { version: data.version, build: Number(data.build) || 0 };
+            }
+        }
+    } catch {}
+    return { version: QUALCORD_VERSION, build: QUALCORD_BUILD };
+}
+
+function isRemoteNewer(remoteVersion: string, remoteBuild?: number): boolean {
+    if (!remoteVersion) return false;
+
+    const local = getLocalVersion();
+
+    // 1. If build numbers exist, compare builds
+    if (typeof remoteBuild === "number" && typeof local.build === "number" && local.build > 0) {
+        if (remoteBuild > local.build) return true;
+        if (remoteBuild < local.build) return false;
+    }
+
+    // 2. Compare semver strings (e.g. 1.0.17 vs 1.0.16)
+    const remoteParts = remoteVersion.replace(/^v/, "").split(".").map(x => parseInt(x, 10) || 0);
+    const localParts = local.version.replace(/^v/, "").split(".").map(x => parseInt(x, 10) || 0);
+
+    for (let i = 0; i < Math.max(remoteParts.length, localParts.length); i++) {
+        const r = remoteParts[i] ?? 0;
+        const l = localParts[i] ?? 0;
+        if (r > l) return true;
+        if (r < l) return false;
+    }
+
+    return false;
+}
+
 async function listUpdates(): Promise<UpdateData[]> {
     try {
-        // 1. Try GitHub Commits API
-        const commits = await fetchJson<any[]>(API_COMMITS, {
+        // Check raw version.json from GitHub
+        const vData = await fetchJson<any>(`${RAW_BASE}/version.json?_t=${Date.now()}`, {
             headers: {
-                Accept: "application/vnd.github+json",
                 "User-Agent": "QualcordUpdater/1.0"
             }
         });
 
-        if (Array.isArray(commits) && commits.length > 0) {
-            const currentHash = (gitHash || "").toLowerCase();
-            const latestSha = (commits[0].sha || "").toLowerCase();
+        if (vData && vData.version) {
+            if (isRemoteNewer(vData.version, vData.build)) {
+                let changelog: UpdateData[] = [];
+                try {
+                    const commits = await fetchJson<any[]>(API_COMMITS, {
+                        headers: {
+                            Accept: "application/vnd.github+json",
+                            "User-Agent": "QualcordUpdater/1.0"
+                        }
+                    });
+                    if (Array.isArray(commits)) {
+                        changelog = commits.map(c => ({
+                            hash: (c.sha || "").slice(0, 7),
+                            author: c.commit?.author?.name || c.author?.login || "Qualcord",
+                            message: (c.commit?.message || "").split("\n")[0]
+                        }));
+                    }
+                } catch {}
 
-            // Already on latest commit
-            if (latestSha.startsWith(currentHash) || currentHash.startsWith(latestSha)) {
+                if (changelog.length === 0) {
+                    changelog = [{
+                        hash: "v" + vData.version,
+                        author: "Qualcord",
+                        message: `Qualcord Update auf Version ${vData.version} verfuegbar`
+                    }];
+                }
+
+                cachedUpdates = changelog;
+                return changelog;
+            } else {
+                // Already on latest version or newer!
                 cachedUpdates = [];
                 return [];
             }
-
-            const updates: UpdateData[] = [];
-            for (const c of commits) {
-                const sha = (c.sha || "").toLowerCase();
-                if (sha.startsWith(currentHash) || currentHash.startsWith(sha)) break;
-
-                updates.push({
-                    hash: (c.sha || "").slice(0, 7),
-                    author: c.commit?.author?.name || c.author?.login || "Qualcord",
-                    message: (c.commit?.message || "").split("\n")[0]
-                });
-            }
-
-            cachedUpdates = updates;
-            return updates;
         }
     } catch (e) {
-        // GitHub API rate limited or network issue - fall back to version.json
+        console.warn("[Qualcord Updater] Failed to check version.json:", e);
     }
 
-    // 2. Fallback via raw version.json
-    try {
-        const vData = await fetchJson<any>(`${RAW_BASE}/version.json?_t=${Date.now()}`);
-        if (vData && vData.version) {
-            const localVersionFile = join(__dirname, "../../version.json");
-            let localVersion = "";
-            if (existsSync(localVersionFile)) {
-                try {
-                    const localJson = JSON.parse(readFileSync(localVersionFile, "utf-8"));
-                    localVersion = localJson.version;
-                } catch {}
-            }
-
-            if (localVersion && vData.version !== localVersion) {
-                cachedUpdates = [{
-                    hash: "v" + vData.version,
-                    author: "Qualcord",
-                    message: `Neues Qualcord Update verfuegbar: Version ${vData.version}`
-                }];
-                return cachedUpdates;
-            }
-        }
-    } catch {}
-
+    cachedUpdates = [];
     return [];
 }
 
