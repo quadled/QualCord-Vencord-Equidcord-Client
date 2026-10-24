@@ -12,3 +12,4 @@ export * from "./QuickAction";
 export * from "./SpecialCard";
 export * from "./tabs";
 export * from "./LivePluginStudioModal";
+export * from "./QualcordUpdateModal";

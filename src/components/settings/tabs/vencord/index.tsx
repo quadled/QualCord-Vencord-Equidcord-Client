@@ -15,7 +15,7 @@ import { Heading } from "@components/Heading";
 import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, PluginsIcon, RestartIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
-import { openContributorModal, openLivePluginStudio, openPluginModal, SettingsTab, wrapTab } from "@components/settings";
+import { openContributorModal, openLivePluginStudio, openPluginModal, openQualcordUpdateModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
 import Plugins, { PluginMeta } from "~plugins";
@@ -267,6 +267,11 @@ function EquicordSettings() {
                     Icon={PluginsIcon}
                     text="Live Plugin Studio"
                     action={openLivePluginStudio}
+                />
+                <QuickAction
+                    Icon={LogIcon}
+                    text={`Was ist neu? (v${QUALCORD_VERSION})`}
+                    action={openQualcordUpdateModal}
                 />
                 <QuickAction
                     Icon={PaintbrushIcon}

@@ -46,6 +46,7 @@ import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
 import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
 import { initLivePlugins } from "./api/LivePlugins";
 import { initQualcordCommunity } from "./qualcordCommunity";
+import { checkAndShowQualcordUpdateModal } from "./components/settings/QualcordUpdateModal";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
@@ -178,8 +179,9 @@ async function init() {
     try {
         initLivePlugins();
         initQualcordCommunity();
+        checkAndShowQualcordUpdateModal();
     } catch (e) {
-        console.error("[Qualcord] Error initializing live plugins or community:", e);
+        console.error("[Qualcord] Error initializing live plugins, community or update modal:", e);
     }
 
     syncSettings();
