@@ -24,7 +24,7 @@ export function normalizePluginId(id: string): string {
 export const SYSTEM_DEFAULT_PLUGIN_IDS: string[] = [
     // Standardmäßig aktivierte Plugins:
     "MyCustomPlugin",
-    "ChannelTabs",
+    "OrionQuests",
 ];
 
 /**
@@ -36,7 +36,6 @@ export const SYSTEM_DEFAULT_PLUGIN_IDS: string[] = [
  */
 export const SYSTEM_REQUIRED_PLUGIN_IDS: string[] = [
     "MyCustomPlugin",
-    "ChannelTabs",
     "ServerListAPI",
 ];
 
