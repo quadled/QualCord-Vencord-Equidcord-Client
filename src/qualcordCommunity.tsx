@@ -252,7 +252,8 @@ function QualcordServerNavButton() {
         <div
             id="qualcord-server-nav-container"
             style={{
-                width: "100%",
+                width: "72px",
+                height: "48px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
