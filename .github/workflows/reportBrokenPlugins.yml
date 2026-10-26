@@ -38,7 +38,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v4
               with:
                   repository: ${{ inputs.pr_repo || github.repository }}
                   ref: ${{ inputs.ref || (github.event_name == 'schedule' && 'dev' || github.ref) }}

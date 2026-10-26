@@ -6,8 +6,8 @@ on:
 
 env:
     FORCE_COLOR: true
-    GITHUB_TOKEN: ${{ secrets.ETOKEN }}
-    REPO: Equicord/Equibored
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    REPO: ${{ github.repository }}
     USERNAME: GitHub-Actions
 
 permissions:
@@ -15,11 +15,11 @@ permissions:
 
 jobs:
     Build:
-        name: Build Equicord
+        name: Build Qualcord
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v4
 
             - name: Setup PNPM
               uses: pnpm/setup@v2.1.0
