@@ -33,12 +33,13 @@ import { Logger } from "@utils/Logger";
 import { onlyOnce } from "@utils/onlyOnce";
 import { canonicalizeFind, canonicalizeReplacement } from "@utils/patches";
 import { DefinedSettings, Patch, Plugin, PluginDef, PluginSettingDef, ReporterTestable, StartAt } from "@utils/types";
-import { isSystemDefaultPlugin, isSystemRequiredPlugin } from "../qualcordDefaults";
 import { FluxEvents } from "@vencord/discord-types";
 import { FluxDispatcher } from "@webpack/common";
 import { patches } from "@webpack/patcher";
 
 import Plugins from "~plugins";
+
+import { isSystemDefaultPlugin, isSystemRequiredPlugin } from "../qualcordDefaults";
 export { Plugins as plugins };
 
 import { addAudioProcessor, removeAudioProcessor } from "./AudioPlayer";

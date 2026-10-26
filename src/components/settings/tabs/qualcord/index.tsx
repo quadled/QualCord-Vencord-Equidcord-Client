@@ -8,31 +8,27 @@ import "./QualcordTab.css";
 
 import { openNotificationLogModal } from "@api/Notifications/notificationLog";
 import { useSettings } from "@api/Settings";
-import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, PluginsIcon, RestartIcon } from "@components/Icons";
+import { FolderIcon, LogIcon, PaintbrushIcon, PluginsIcon, RestartIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
-import { openContributorModal, openLivePluginStudio, openPluginModal, openQualcordUpdateModal, SettingsTab, wrapTab } from "@components/settings";
+import { openLivePluginStudio, openPluginModal, openQualcordUpdateModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
-import { SpecialCard } from "@components/settings/SpecialCard";
-import Plugins, { PluginMeta } from "~plugins";
-import { QUALCORD_LOGO } from "../../../../qualcordLogo";
-import { QUALCORD_VERSION } from "../../../../qualcordVersion";
 import BadgeAPI from "@plugins/_api/badges";
 import SettingsPlugin from "@plugins/_core/settings";
-import { gitRemote } from "@shared/qualcordUserAgent";
 import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
-import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { promptToRestart } from "@utils/promptToRestart";
-import { GuildMemberStore, React, useMemo, UserStore } from "@webpack/common";
+import { GuildMemberStore, React, useMemo } from "@webpack/common";
 
-import { DonateButtonComponent } from "./DonateButton";
+import { PluginMeta } from "~plugins";
+
+import { QUALCORD_LOGO } from "../../../../qualcordLogo";
+import { QUALCORD_VERSION } from "../../../../qualcordVersion";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
@@ -154,7 +150,7 @@ function Switches() {
 }
 
 function QualcordSettings() {
-    const settings = useSettings(["plugins"]);
+    const settings = useSettings(["plugins.*"]);
     const activePlugins = useMemo(() =>
         Object.values(settings.plugins || {}).filter(p => p?.enabled).length,
         [settings.plugins]

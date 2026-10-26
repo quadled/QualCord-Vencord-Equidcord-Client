@@ -53,7 +53,7 @@ try {
     const tsContent = `/* Automatisch generiert durch version.json */\nexport const QUALCORD_VERSION = "${qualcordVersion}";\nexport const QUALCORD_BUILD = ${qualcordBuild};\n`;
     writeFileSync(join(ROOT_DIR, "src/qualcordVersion.ts"), tsContent, "utf-8");
 } catch (e) {
-    console.warn("Could not read/update version.json:", e.message);
+    console.warn("Could not read/update version.json:", e instanceof Error ? e.message : String(e));
 }
 
 export const VERSION = qualcordVersion;

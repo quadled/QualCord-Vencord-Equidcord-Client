@@ -17,8 +17,8 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import globalBadges from "@qualcordplugins/globalBadges";
 import BadgeAPIPlugin from "@plugins/_api/badges";
+import globalBadges from "@qualcordplugins/globalBadges";
 import { ComponentType, HTMLProps } from "react";
 
 import { isPluginEnabled } from "./PluginManager";

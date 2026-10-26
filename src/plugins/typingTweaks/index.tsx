@@ -19,8 +19,8 @@
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { getCustomColorString } from "@qualcordplugins/customUserColors";
 import showMeYourName from "@plugins/showMeYourName";
+import { getCustomColorString } from "@qualcordplugins/customUserColors";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { openUserProfile } from "@utils/discord";

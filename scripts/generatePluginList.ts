@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { readdirSync, writeFileSync } from "fs";
+import { existsSync, readdirSync, writeFileSync } from "fs";
 import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, PluginData } from "./utils";
 
 (async () => {
@@ -25,7 +25,7 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
 
     const args = process.argv.slice(2);
 
-    const equicordFlag = args.includes("--equicord");
+    const equicordFlag = args.includes("--equicord") || args.includes("--qualcord");
     const vencordFlag = args.includes("--vencord");
 
     let dirs: string[];
@@ -43,7 +43,7 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
     const plugins = [] as PluginData[];
 
     await Promise.all(
-        dirs.flatMap(dir =>
+        dirs.filter(d => existsSync(d)).flatMap(dir =>
             readdirSync(dir, { withFileTypes: true })
                 .filter(isPluginFile)
                 .map(async dirent => {

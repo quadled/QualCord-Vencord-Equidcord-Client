@@ -5,26 +5,27 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, CloudIcon, LogIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
+import { BackupRestoreIcon, CloudIcon, LogIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
 import {
     BackupAndRestoreTab,
     ChangelogTab,
     CloudTab,
     PatchHelperTab,
     PluginsTab,
+    QualcordTab,
     ThemesTab,
     UpdaterTab,
-    QualcordTab,
 } from "@components/settings";
 import { gitHashShort } from "@shared/vencordUserAgent";
-import { QUALCORD_LOGO } from "../../qualcordLogo";
-import { QUALCORD_VERSION } from "../../qualcordVersion";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
 import { React } from "@webpack/common";
 import type { ComponentType, PropsWithChildren, ReactNode } from "react";
+
+import { QUALCORD_LOGO } from "../../qualcordLogo";
+import { QUALCORD_VERSION } from "../../qualcordVersion";
 
 const enum LayoutType {
     ROOT = 0,

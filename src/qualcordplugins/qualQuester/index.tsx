@@ -1,11 +1,12 @@
 /*
- * QualQuester Plugin for Qualcord
- * Automatically completes Discord Quests (Video, Game, Stream, Activity)
- * With HeaderBar integration in the top titlebar.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { ApplicationCommandInputType } from "@api/Commands";
 import { HeaderBarButton } from "@api/HeaderBar";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import type { ComponentType, SVGProps } from "react";
 
@@ -52,12 +53,7 @@ function QuestHeaderButton() {
 export default definePlugin({
     name: "QualQuester",
     description: "Fügt ein Quest-Icon in der Discord-Titelleiste hinzu, um Quests automatisch mit QualQuester zu erledigen.",
-    authors: [
-        {
-            name: "Qualcord",
-            id: 0n
-        }
-    ],
+    authors: [Devs.Qualcord],
     dependencies: ["HeaderBarAPI", "CommandsAPI"],
     enabledByDefault: true,
 

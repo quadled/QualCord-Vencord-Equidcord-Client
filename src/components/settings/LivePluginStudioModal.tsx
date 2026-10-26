@@ -1,6 +1,7 @@
 /*
- * Qualcord Live Plugin Studio - In-App IDE Modal
- * Code, test, run, and persist custom plugins live directly inside Discord.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import {
@@ -133,7 +134,7 @@ function LivePluginStudioModal(props: any) {
         const stopped = stopLivePlugin(pluginName);
         if (stopped) {
             addLog(`⏹ Plugin '${pluginName}' gestoppt.`, "info");
-            showToast({ text: `Plugin '${pluginName}' wurde gestoppt.`, variant: "normal" });
+            showToast({ text: `Plugin '${pluginName}' wurde gestoppt.`, variant: "default" });
         } else {
             addLog(`Plugin '${pluginName}' läuft aktuell nicht.`, "info");
         }
@@ -181,7 +182,7 @@ function LivePluginStudioModal(props: any) {
             const updated = await deleteLivePlugin(selectedPluginId);
             setPlugins(updated);
             addLog("🗑 Plugin gelöscht.", "info");
-            showToast({ text: "Plugin gelöscht.", variant: "normal" });
+            showToast({ text: "Plugin gelöscht.", variant: "default" });
 
             if (updated.length > 0) {
                 loadPlugin(updated[0]);
@@ -200,7 +201,7 @@ function LivePluginStudioModal(props: any) {
             const textarea = e.currentTarget;
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
-            const value = textarea.value;
+            const { value } = textarea;
 
             const newValue = value.substring(0, start) + "    " + value.substring(end);
             setCode(newValue);

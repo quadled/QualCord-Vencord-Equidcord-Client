@@ -1,6 +1,7 @@
 /*
- * Qualcord Update Screen / "What's New" Modal
- * Automatically pops up once when a new Qualcord version is detected on startup.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { DataStore } from "@api/index";

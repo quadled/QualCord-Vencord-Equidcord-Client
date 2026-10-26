@@ -1,15 +1,15 @@
 /*
- * Qualcord HTTP Updater
- * Seamlessly checks version.json and downloads pre-built Qualcord packages
- * without requiring Git or Node.js.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { fetchBuffer, fetchJson } from "@main/utils/http";
 import { execFile as cpExecFile } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
 
-import { fetchBuffer, fetchJson } from "@main/utils/http";
 import gitRemote from "~git-remote";
 
 import { QUALCORD_BUILD, QUALCORD_VERSION } from "../../qualcordVersion";

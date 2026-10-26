@@ -7,9 +7,9 @@
 import { registerCommands } from "../api/registry";
 import { loadCustomCommands, registerCustomCommands } from "./custom";
 import { discordCommands } from "./discordActions";
-import { qualcordCommands } from "./qualcord";
 import { navigationCommands } from "./navigation";
 import { pluginCommands } from "./pluginManagement";
+import { qualcordCommands } from "./qualcord";
 import { sendDmCommand } from "./sendDm";
 
 export async function registerBuiltinCommands() {

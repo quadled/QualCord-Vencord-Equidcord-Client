@@ -1,9 +1,7 @@
 /*
- * Qualcord Community Integration
- * Handles:
- * 1. Fixed Unmovable Qualcord Discord Server button above the divider line (where the Quest icon is, above "1").
- * 2. Automatic join to the Qualcord Discord server (https://discord.gg/Pk3dVqS5Hn) for all users of the client.
- * 3. Hiding Qualcord from the regular draggable guild list so it remains exclusively pinned at the top.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { addServerListElement, ServerListRenderPosition } from "@api/ServerList";
@@ -25,10 +23,9 @@ import {
     showToast,
     SortedGuildStore,
     Tooltip,
+    UserStore,
     useState,
-    useStateFromStores,
-    UserStore
-} from "@webpack/common";
+    useStateFromStores } from "@webpack/common";
 
 import { QUALCORD_LOGO } from "./qualcordLogo";
 
@@ -198,7 +195,7 @@ function QualcordServerNavButton() {
         } else {
             showToast({
                 text: "Trete dem Qualcord Discord-Server bei...",
-                variant: "normal"
+                variant: "default"
             });
             const joined = await joinQualcordServer(false);
             if (joined) {

@@ -1,12 +1,13 @@
 /*
- * Qualcord Live Plugin Studio - Core Service
- * Allows users to write, test, execute, and persist custom plugins live inside Discord.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { registerCommand, sendBotMessage, unregisterCommand } from "@api/Commands";
 import { ApplicationCommandInputType, ApplicationCommandOptionType, ApplicationCommandType } from "@api/Commands/types";
 import * as DataStore from "@api/DataStore";
-import { PMLogger, startPlugin, stopPlugin } from "@api/PluginManager";
+import { startPlugin, stopPlugin } from "@api/PluginManager";
 import { Settings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
@@ -430,9 +431,33 @@ export function executeLivePlugin(
                 registerCommand,
                 unregisterCommand,
                 sendBotMessage,
-                ApplicationCommandInputType,
-                ApplicationCommandOptionType,
-                ApplicationCommandType
+                ApplicationCommandInputType: {
+                    BUILT_IN: ApplicationCommandInputType.BUILT_IN,
+                    BUILT_IN_TEXT: ApplicationCommandInputType.BUILT_IN_TEXT,
+                    BUILT_IN_INTEGRATION: ApplicationCommandInputType.BUILT_IN_INTEGRATION,
+                    BOT: ApplicationCommandInputType.BOT,
+                    PLACEHOLDER: ApplicationCommandInputType.PLACEHOLDER
+                },
+                ApplicationCommandOptionType: {
+                    SUB_COMMAND: ApplicationCommandOptionType.SUB_COMMAND,
+                    SUB_COMMAND_GROUP: ApplicationCommandOptionType.SUB_COMMAND_GROUP,
+                    STRING: ApplicationCommandOptionType.STRING,
+                    INTEGER: ApplicationCommandOptionType.INTEGER,
+                    BOOLEAN: ApplicationCommandOptionType.BOOLEAN,
+                    USER: ApplicationCommandOptionType.USER,
+                    CHANNEL: ApplicationCommandOptionType.CHANNEL,
+                    ROLE: ApplicationCommandOptionType.ROLE,
+                    MENTIONABLE: ApplicationCommandOptionType.MENTIONABLE,
+                    NUMBER: ApplicationCommandOptionType.NUMBER,
+                    ATTACHMENT: ApplicationCommandOptionType.ATTACHMENT
+                },
+                ApplicationCommandType: {
+                    CHAT: ApplicationCommandType.CHAT_INPUT,
+                    CHAT_INPUT: ApplicationCommandType.CHAT_INPUT,
+                    USER: ApplicationCommandType.USER,
+                    MESSAGE: ApplicationCommandType.MESSAGE,
+                    PRIMARY_ENTRY_POINT: ApplicationCommandType.PRIMARY_ENTRY_POINT
+                }
             },
             FluxDispatcher,
             DataStore,

@@ -1,3 +1,9 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 // @ts-nocheck
 /*
  * QualQuester Quest Completer Runner for Qualcord
@@ -13,40 +19,40 @@ export function launchQualquester() {
         const CONFIG = {
             NAME: "QualQuester",
             VERSION: "v4.11.5",
-            THEME: "#5865F2",             // discord blurple
+            THEME: "#5865F2", // discord blurple
             SUCCESS: "#3BA55C",
             WARN: "#faa61a",
             ERR: "#f04747",
-            HIDE_ACTIVITY: false,           // hide "Playing ..." while quests run (turns Discord's own
+            HIDE_ACTIVITY: false, // hide "Playing ..." while quests run (turns Discord's own
                                             // showCurrentGame off for the duration, restores it after)
-            PLAY_SESSION_TAIL_MIN: 2,       // minutes to keep a finished game quest's fake process
+            PLAY_SESSION_TAIL_MIN: 2, // minutes to keep a finished game quest's fake process
                                             // running, picked at random between 40% and 100% of this
                                             // each time. 0 drops it on the tick that crossed the
                                             // target, which makes every session exactly as long as
                                             // the quest requirement. Costs no extra requests: Discord
                                             // ends the quest heartbeat itself on completion, so this
                                             // only extends the "Playing ..." presence.
-            MAX_LOG_ITEMS: 60               // UI log limit
+            MAX_LOG_ITEMS: 60 // UI log limit
         };
 
         /* ── internal system limits (DO NOT EDIT) ─────────────────── */
 
         const SYS = Object.freeze({
-            MAX_TIME: 25 * 60 * 1000,       // hard abort per task (25 min)
-            HEARTBEAT_GRACE: 90 * 1000,     // GAME/STREAM: give up if Discord sends no heartbeat
-            MAX_TASK_FAILURES: 5,           // consecutive network failures
-            MAX_RETRIES: 3,                 // 429/5xx transient error retries
-            IS_DESKTOP: typeof window.DiscordNative !== 'undefined'
+            MAX_TIME: 25 * 60 * 1000, // hard abort per task (25 min)
+            HEARTBEAT_GRACE: 90 * 1000, // GAME/STREAM: give up if Discord sends no heartbeat
+            MAX_TASK_FAILURES: 5, // consecutive network failures
+            MAX_RETRIES: 3, // 429/5xx transient error retries
+            IS_DESKTOP: typeof window.DiscordNative !== "undefined"
         });
 
         // mutable runtime state lives here, CONFIG stays read-only
         const RUNTIME = {
             running: true,
-            cleanups: new Set(),            // tracks active event listeners for safe shutdown
-            autoEnroll: true,               // whether to auto-enroll in quests before execution
-            autoClaim: false,               // whether to try auto-claiming quest rewards
-            playSound: false,               // whether to play an audio cue on quest completion
-            randomDelay: false              // whether to inject randomized 1-30min idle gaps between quests (anti-detection)
+            cleanups: new Set(), // tracks active event listeners for safe shutdown
+            autoEnroll: true, // whether to auto-enroll in quests before execution
+            autoClaim: false, // whether to try auto-claiming quest rewards
+            playSound: false, // whether to play an audio cue on quest completion
+            randomDelay: false // whether to inject randomized 1-30min idle gaps between quests (anti-detection)
         };
 
         /* ── audio cue ───────────────────────────────────────────────── */
@@ -57,14 +63,14 @@ export function launchQualquester() {
                 try {
                     const Ctx = window.AudioContext || window.webkitAudioContext;
                     if (!Ctx) return;
-                    if (!this._ctx || this._ctx.state === 'closed') this._ctx = new Ctx();
+                    if (!this._ctx || this._ctx.state === "closed") this._ctx = new Ctx();
                     const ctx = this._ctx;
                     const o = ctx.createOscillator();
                     const g = ctx.createGain();
                     o.connect(g); g.connect(ctx.destination);
-                    o.type = 'sine';
+                    o.type = "sine";
                     const t0 = ctx.currentTime;
-                    if (type === 'done') {
+                    if (type === "done") {
                         // C5 E5 G5 arpeggio
                         o.frequency.setValueAtTime(523.25, t0);
                         o.frequency.setValueAtTime(659.25, t0 + 0.12);
@@ -86,13 +92,13 @@ export function launchQualquester() {
         const Consent = {
             _granted: new Set(),
             TIMEOUT: 60000,
-            SCOPES: ['identify', 'applications.commands', 'applications.entitlements'],
+            SCOPES: ["identify", "applications.commands", "applications.entitlements"],
             ask(appId, appName) {
                 if (this._granted.has(appId)) return Promise.resolve(true);
                 return new Promise(resolve => {
-                    const ov = document.createElement('div');
-                    ov.id = 'qualquester-consent';
-                    ov.style.cssText = 'position:fixed;inset:0;z-index:1002;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font-family:var(--font-primary);';
+                    const ov = document.createElement("div");
+                    ov.id = "qualquester-consent";
+                    ov.style.cssText = "position:fixed;inset:0;z-index:1002;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font-family:var(--font-primary);";
                     ov.innerHTML = `<div style="width:420px;max-width:92vw;background:var(--background-base-low);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-button-overlay);color:var(--text-default);overflow:hidden;">
                         <div style="padding:14px 16px;background:var(--background-mod-muted);border-bottom:1px solid var(--border-subtle);font-weight:700;color:var(--text-strong);">QualQuester - Authorize application?</div>
                         <div style="padding:16px;font-size:13px;line-height:1.5;">
@@ -109,36 +115,36 @@ export function launchQualquester() {
                             <button id="oc-yes" class="quest-pick-btn start" style="flex:1;">Authorize</button>
                         </div></div>`;
                     document.body.appendChild(ov);
-                    ov.querySelector('#oc-app').textContent = appName ? `${appName} (${appId})` : `App ${appId}`;
-                    const ul = ov.querySelector('#oc-scopes');
-                    this.SCOPES.forEach(s => { const li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+                    ov.querySelector("#oc-app").textContent = appName ? `${appName} (${appId})` : `App ${appId}`;
+                    const ul = ov.querySelector("#oc-scopes");
+                    this.SCOPES.forEach(s => { const li = document.createElement("li"); li.textContent = s; ul.appendChild(li); });
                     let done = false;
                     const finish = v => {
                         if (done) return; done = true;
-                        clearTimeout(timer); document.removeEventListener('keydown', onKey);
-                        if (v && ov.querySelector('#oc-remember').checked) this._granted.add(appId);
+                        clearTimeout(timer); document.removeEventListener("keydown", onKey);
+                        if (v && ov.querySelector("#oc-remember").checked) this._granted.add(appId);
                         ov.remove(); resolve(v);
                     };
-                    const onKey = e => { if (e.key === 'Escape') finish(false); };
-                    ov.querySelector('#oc-yes').addEventListener('click', () => finish(true));
-                    ov.querySelector('#oc-no').addEventListener('click', () => finish(false));
-                    ov.addEventListener('mousedown', e => { if (e.target === ov) finish(false); });
-                    document.addEventListener('keydown', onKey);
+                    const onKey = e => { if (e.key === "Escape") finish(false); };
+                    ov.querySelector("#oc-yes").addEventListener("click", () => finish(true));
+                    ov.querySelector("#oc-no").addEventListener("click", () => finish(false));
+                    ov.addEventListener("mousedown", e => { if (e.target === ov) finish(false); });
+                    document.addEventListener("keydown", onKey);
                     const timer = setTimeout(() => finish(false), this.TIMEOUT);
                 });
             }
         };
 
         const ICONS = Object.freeze({
-            OPT: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10.56 1.1c-.46.05-.7.53-.64.98.18 1.16-.19 2.2-.98 2.53-.8.33-1.79-.15-2.49-1.1-.27-.36-.78-.52-1.14-.24-.77.59-1.45 1.27-2.04 2.04-.28.36-.12.87.24 1.14.96.7 1.43 1.7 1.1 2.49-.33.8-1.37 1.16-2.53.98-.45-.07-.93.18-.99.64a11.1 11.1 0 0 0 0 2.88c.06.46.54.7.99.64 1.16-.18 2.2.19 2.53.98.33.8-.14 1.79-1.1 2.49-.36.27-.52.78-.24 1.14.59.77 1.27 1.45 2.04 2.04.36.28.87.12 1.14-.24.7-.95 1.7-1.43 2.49-1.1.8.33 1.16 1.37.98 2.53-.07.45.18.93.64.99a11.1 11.1 0 0 0 2.88 0c.46-.06.7-.54.64-.99-.18-1.16.19-2.2.98-2.53.8-.33 1.79.14 2.49 1.1.27.36.78.52 1.14.24.77-.59 1.45-1.27 2.04-2.04.28-.36.12-.87-.24-1.14-.96-.7-1.43-1.7-1.1-2.49.33-.8 1.37-1.16 2.53-.98.45.07.93-.18.99-.64a11.1 11.1 0 0 0 0-2.88c-.06-.46-.54-.7-.99-.64-1.16.18-2.2-.19-2.53-.98-.33-.8.14-1.79 1.1-2.49.36-.27.52-.78.24-1.14a11.07 11.07 0 0 0-2.04-2.04c-.36-.28-.87-.12-1.14.24-.7.96-1.7 1.43-2.49 1.1-.8-.33-1.16-1.37-.98-2.53.07-.45-.18-.93-.64-.99a11.1 11.1 0 0 0-2.88 0ZM16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>`,
-            BOLT: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.29-.62L14.5 3h1l-1 7h3.5c.58 0 .57.32.29.62L11 21z"/></svg>`,
-            VIDEO: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>`,
-            GAME: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>`,
-            STREAM: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`,
-            ACTIVITY: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>`,
-            CHECK: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`,
-            CLOCK: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>`,
-            STOP: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>`
+            OPT: "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M10.56 1.1c-.46.05-.7.53-.64.98.18 1.16-.19 2.2-.98 2.53-.8.33-1.79-.15-2.49-1.1-.27-.36-.78-.52-1.14-.24-.77.59-1.45 1.27-2.04 2.04-.28.36-.12.87.24 1.14.96.7 1.43 1.7 1.1 2.49-.33.8-1.37 1.16-2.53.98-.45-.07-.93.18-.99.64a11.1 11.1 0 0 0 0 2.88c.06.46.54.7.99.64 1.16-.18 2.2.19 2.53.98.33.8-.14 1.79-1.1 2.49-.36.27-.52.78-.24 1.14.59.77 1.27 1.45 2.04 2.04.36.28.87.12 1.14-.24.7-.95 1.7-1.43 2.49-1.1.8.33 1.16 1.37.98 2.53-.07.45.18.93.64.99a11.1 11.1 0 0 0 2.88 0c.46-.06.7-.54.64-.99-.18-1.16.19-2.2.98-2.53.8-.33 1.79.14 2.49 1.1.27.36.78.52 1.14.24.77-.59 1.45-1.27 2.04-2.04.28-.36.12-.87-.24-1.14-.96-.7-1.43-1.7-1.1-2.49.33-.8 1.37-1.16 2.53-.98.45.07.93-.18.99-.64a11.1 11.1 0 0 0 0-2.88c-.06-.46-.54-.7-.99-.64-1.16.18-2.2-.19-2.53-.98-.33-.8.14-1.79 1.1-2.49.36-.27.52-.78.24-1.14a11.07 11.07 0 0 0-2.04-2.04c-.36-.28-.87-.12-1.14.24-.7.96-1.7 1.43-2.49 1.1-.8-.33-1.16-1.37-.98-2.53.07-.45-.18-.93-.64-.99a11.1 11.1 0 0 0-2.88 0ZM16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z\"/></svg>",
+            BOLT: "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.29-.62L14.5 3h1l-1 7h3.5c.58 0 .57.32.29.62L11 21z\"/></svg>",
+            VIDEO: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z\"/></svg>",
+            GAME: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z\"/></svg>",
+            STREAM: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z\"/></svg>",
+            ACTIVITY: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z\"/></svg>",
+            CHECK: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z\"/></svg>",
+            CLOCK: "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.59 8 8-3.59 8-8 8z\"/><path d=\"M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z\"/></svg>",
+            STOP: "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M6 6h12v12H6z\"/></svg>"
         });
 
         const CONST = Object.freeze({
@@ -153,9 +159,9 @@ export function launchQualquester() {
 
         // bail early or toggle if another instance is already running
         if (window.qualquesterLock || window.orionLock) {
-            const existingUI = document.getElementById('qualquester-ui') || document.getElementById('orion-ui');
+            const existingUI = document.getElementById("qualquester-ui") || document.getElementById("orion-ui");
             if (existingUI) {
-                existingUI.style.display = existingUI.style.display === 'none' ? 'flex' : 'none';
+                existingUI.style.display = existingUI.style.display === "none" ? "flex" : "none";
             }
             return console.warn(`[${CONFIG.NAME}] Toggled existing QualQuester window.`);
         }
@@ -166,12 +172,12 @@ export function launchQualquester() {
 
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
         const notExpired = q => {
             try {
                 const store = Mods.QuestStore;
-                if (typeof store?.isQuestExpired === 'function') return store.isQuestExpired(q.id) !== true;
+                if (typeof store?.isQuestExpired === "function") return store.isQuestExpired(q.id) !== true;
             } catch (_) { }
             const e = new Date(q.config?.expiresAt ?? 0).getTime();
             return Number.isNaN(e) || e > Date.now();
@@ -180,7 +186,7 @@ export function launchQualquester() {
         const orbReward = config => {
             const rewards = config?.rewardsConfig?.rewards;
             if (!Array.isArray(rewards)) return null;
-            const amount = v => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
+            const amount = v => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0);
 
             let orbs = 0, premium = 0;
             for (const r of rewards) {
@@ -202,19 +208,19 @@ export function launchQualquester() {
         };
 
         const orbPayout = (reward, boosted) => (reward ? (boosted ? reward.premium : reward.orbs) : 0);
-        const fmtOrbs = (reward, boosted) => (reward ? `${orbPayout(reward, boosted)} Orbs` : '');
+        const fmtOrbs = (reward, boosted) => (reward ? `${orbPayout(reward, boosted)} Orbs` : "");
 
-        const orbBalance = v => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null);
+        const orbBalance = v => (typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
 
         const readOrbBalance = async () => {
             const account = Mods.UserStore?.getCurrentUser?.()?.id ?? null;
-            if (!account) throw new Error('no account is signed in');
+            if (!account) throw new Error("no account is signed in");
             const store = Mods.OrbStore;
             const stored = orbBalance(store?.getCurrentBalance?.() ?? store?.balance);
             if (stored !== null) return stored;
-            const res = await Mods.API.get({ url: '/users/@me/virtual-currency/balance' });
+            const res = await Mods.API.get({ url: "/users/@me/virtual-currency/balance" });
             const after = Mods.UserStore?.getCurrentUser?.()?.id ?? null;
-            if (after !== account) throw new Error('the account changed during the read');
+            if (after !== account) throw new Error("the account changed during the read");
             return orbBalance(res?.body?.balance);
         };
 
@@ -223,12 +229,12 @@ export function launchQualquester() {
             catch (_) { return null; }
         };
 
-        const CONSOLE_ONLY_KEYS = new Set(['PLAY_ON_XBOX', 'PLAY_ON_PLAYSTATION']);
+        const CONSOLE_ONLY_KEYS = new Set(["PLAY_ON_XBOX", "PLAY_ON_PLAYSTATION"]);
 
-        const taskKeys = (tasks) => (tasks instanceof Map ? [...tasks.keys()] : Object.keys(tasks ?? {}));
+        const taskKeys = tasks => (tasks instanceof Map ? [...tasks.keys()] : Object.keys(tasks ?? {}));
         const taskAt = (tasks, key) => (tasks instanceof Map ? tasks.get(key) : tasks?.[key]);
 
-        const selectTaskConfig = (config) => {
+        const selectTaskConfig = config => {
             const current = config?.taskConfigV2;
             if (taskKeys(current?.tasks).length > 0) return current;
             const legacy = config?.taskConfig;
@@ -237,7 +243,7 @@ export function launchQualquester() {
         };
 
         const UNAUTOMATABLE_KEYS = new Map([
-            ['ACHIEVEMENT_IN_GAME', 'That needs the game linked to your account and an achievement earned inside the game itself, which nothing running in Discord can do for you.']
+            ["ACHIEVEMENT_IN_GAME", "That needs the game linked to your account and an achievement earned inside the game itself, which nothing running in Discord can do for you."]
         ]);
 
         const questBlocker = ({ name, hasTaskConfig, keys, typeData, isDesktop }) => {
@@ -245,50 +251,50 @@ export function launchQualquester() {
 
             if (!typeData) {
                 if (!keys.length) return `"${name}" lists no tasks at all, so there is nothing to drive.`;
-                if (keys.every(k => CONSOLE_ONLY_KEYS.has(k))) return `"${name}" is console-only (${keys.join(', ')}), so no desktop client can run it.`;
+                if (keys.every(k => CONSOLE_ONLY_KEYS.has(k))) return `"${name}" is console-only (${keys.join(", ")}), so no desktop client can run it.`;
 
                 const named = keys.find(k => UNAUTOMATABLE_KEYS.has(k));
                 if (named) {
                     return keys.length === 1
                         ? `"${name}" offers only ${named}. ${UNAUTOMATABLE_KEYS.get(named)}`
-                        : `"${name}" offers ${keys.join(', ')}, and none of them run here. The one we know about is ${named}. ${UNAUTOMATABLE_KEYS.get(named)}`;
+                        : `"${name}" offers ${keys.join(", ")}, and none of them run here. The one we know about is ${named}. ${UNAUTOMATABLE_KEYS.get(named)}`;
                 }
 
-                return `"${name}" uses an unsupported task type (${keys.join(', ')}).`;
+                return `"${name}" uses an unsupported task type (${keys.join(", ")}).`;
             }
 
             const { type, target, appId } = typeData;
 
-            if (!isDesktop && (type === 'GAME' || type === 'STREAM')) return `"${name}" needs the desktop app for its ${type} task.`;
+            if (!isDesktop && (type === "GAME" || type === "STREAM")) return `"${name}" needs the desktop app for its ${type} task.`;
             if (target <= 0) return `"${name}" has an invalid target (${target}).`;
-            if ((type === 'GAME' || type === 'STREAM') && !appId) return `"${name}" has no application id in its config, so the game cannot be spoofed.`;
+            if ((type === "GAME" || type === "STREAM") && !appId) return `"${name}" has no application id in its config, so the game cannot be spoofed.`;
 
             return null;
         };
 
         const recordOutcome = (outcomes, id, outcome) => {
-            if (outcomes.get(id) === 'completed') return;
+            if (outcomes.get(id) === "completed") return;
             outcomes.set(id, outcome);
         };
 
-        const summarizeRun = (outcomes) => {
+        const summarizeRun = outcomes => {
             let finished = 0, blocked = 0, failed = 0;
             for (const outcome of outcomes.values()) {
-                if (outcome === 'completed') finished++;
-                else if (outcome === 'blocked') blocked++;
+                if (outcome === "completed") finished++;
+                else if (outcome === "blocked") blocked++;
                 else failed++;
             }
 
-            if (!blocked && !failed) return { finished, blocked, failed, line: 'All available quests are completed!', playDone: true };
+            if (!blocked && !failed) return { finished, blocked, failed, line: "All available quests are completed!", playDone: true };
 
             const parts = [];
             if (finished) parts.push(`${finished} quest(s) finished`);
             if (blocked) parts.push(`${blocked} skipped because this client cannot drive them`);
             if (failed) parts.push(`${failed} failed`);
-            return { finished, blocked, failed, line: `Nothing left to run. ${parts.join(', ')}.`, playDone: finished > 0 };
+            return { finished, blocked, failed, line: `Nothing left to run. ${parts.join(", ")}.`, playDone: finished > 0 };
         };
 
-        const futureDate = (raw) => {
+        const futureDate = raw => {
             try {
                 if (!raw) return null;
                 const when = raw instanceof Date ? raw : new Date(raw);
@@ -321,7 +327,7 @@ export function launchQualquester() {
                 }
                 return null;
             } catch (e) {
-                Logger.log(`[Task] Stream key lookup error: ${e.message}`, 'debug');
+                Logger.log(`[Task] Stream key lookup error: ${e.message}`, "debug");
                 return null;
             }
         };
@@ -338,7 +344,7 @@ export function launchQualquester() {
                     isRetryable: this.RETRYABLE.has(status),
                     isClientError: this.CLIENT_ERRORS.has(status),
                     status,
-                    message: error?.message ?? error?.body?.message ?? `HTTP ${status ?? 'UNKNOWN'}`
+                    message: error?.message ?? error?.body?.message ?? `HTTP ${status ?? "UNKNOWN"}`
                 };
             },
 
@@ -354,11 +360,11 @@ export function launchQualquester() {
             root: null, tasks: new Map(), tickerId: null, _hotkey: null,
 
             init() {
-                const oldUI = document.getElementById('qualquester-ui') || document.getElementById('orion-ui'); if (oldUI) oldUI.remove();
-                const oldStyle = document.getElementById('qualquester-styles') || document.getElementById('orion-styles'); if (oldStyle) oldStyle.remove();
+                const oldUI = document.getElementById("qualquester-ui") || document.getElementById("orion-ui"); if (oldUI) oldUI.remove();
+                const oldStyle = document.getElementById("qualquester-styles") || document.getElementById("orion-styles"); if (oldStyle) oldStyle.remove();
 
-                const style = document.createElement('style');
-                style.id = 'qualquester-styles';
+                const style = document.createElement("style");
+                style.id = "qualquester-styles";
                 style.innerHTML = `
                     @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
                     @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); margin: 0; padding: 0; height: 0; border: none; } }
@@ -483,8 +489,8 @@ export function launchQualquester() {
                 `;
                 document.head.appendChild(style);
 
-                this.root = document.createElement('div');
-                this.root.id = 'qualquester-ui';
+                this.root = document.createElement("div");
+                this.root.id = "qualquester-ui";
                 this.root.innerHTML = `
                     <div id="qualquester-head">
                         <span id="qualquester-title">${ICONS.BOLT} ${CONFIG.NAME}
@@ -502,19 +508,19 @@ export function launchQualquester() {
                 `;
                 document.body.appendChild(this.root);
 
-                const head = document.getElementById('qualquester-head');
+                const head = document.getElementById("qualquester-head");
 
                 let collapsed = false;
-                head.addEventListener('dblclick', e => {
-                    if (e.target.closest('.ctrl-btn')) return;
+                head.addEventListener("dblclick", e => {
+                    if (e.target.closest(".ctrl-btn")) return;
                     collapsed = !collapsed;
-                    this.root.style.height = collapsed ? '50px' : '';
+                    this.root.style.height = collapsed ? "50px" : "";
                 });
 
-                head.addEventListener('mousedown', e => {
-                    if (e.target.closest('.ctrl-btn')) return;
+                head.addEventListener("mousedown", e => {
+                    if (e.target.closest(".ctrl-btn")) return;
 
-                    head.classList.add('dragging');
+                    head.classList.add("dragging");
 
                     const startX = e.clientX, startY = e.clientY;
                     const rect = this.root.getBoundingClientRect();
@@ -522,7 +528,7 @@ export function launchQualquester() {
 
                     this.root.style.left = `${initialLeft}px`;
                     this.root.style.top = `${initialTop}px`;
-                    this.root.style.right = 'auto';
+                    this.root.style.right = "auto";
                     e.preventDefault();
 
                     const onMouseMove = ev => {
@@ -531,28 +537,28 @@ export function launchQualquester() {
                     };
 
                     const onMouseUp = () => {
-                        head.classList.remove('dragging');
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
+                        head.classList.remove("dragging");
+                        document.removeEventListener("mousemove", onMouseMove);
+                        document.removeEventListener("mouseup", onMouseUp);
                     };
 
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
                 });
 
-                const getEl = id => document.getElementById(id) || document.getElementById(id.replace('qualquester-', 'orion-'));
+                const getEl = id => document.getElementById(id) || document.getElementById(id.replace("qualquester-", "orion-"));
 
-                getEl('qualquester-body')?.addEventListener('click', async (e) => {
-                    if (e.target.classList.contains('goto-btn')) {
-                        if (Mods.Router) Mods.Router.transitionTo('/quest-home');
+                getEl("qualquester-body")?.addEventListener("click", async e => {
+                    if (e.target.classList.contains("goto-btn")) {
+                        if (Mods.Router) Mods.Router.transitionTo("/quest-home");
                         return;
                     }
 
-                    if (e.target.classList.contains('claim-btn')) {
+                    if (e.target.classList.contains("claim-btn")) {
                         const btn = e.target;
                         if (btn.disabled) return;
 
-                        const questId = btn.getAttribute('data-id');
+                        const questId = btn.getAttribute("data-id");
                         const taskData = this.tasks.get(questId);
                         if (!taskData) return;
 
@@ -560,45 +566,45 @@ export function launchQualquester() {
                         btn.disabled = true;
                         btn.style.opacity = "0.5";
 
-                        this.updateTask(questId, { ...taskData, claimState: 'WAITING' });
+                        this.updateTask(questId, { ...taskData, claimState: "WAITING" });
 
                         try {
                             const claimRes = await Tasks.claimReward(questId);
 
                             if (claimRes?.body?.claimed_at) {
                                 btn.innerText = "CLAIMED!";
-                                this.log(`[Claim] Reward for "${taskData.name}" claimed successfully!`, 'success');
+                                this.log(`[Claim] Reward for "${taskData.name}" claimed successfully!`, "success");
 
                                 this.updateTask(questId, { ...taskData, status: "CLAIMED", claimable: false, claimState: null });
                                 setTimeout(() => this.removeTask(questId), 2000);
                             } else {
-                                this.log(`[Claim] Reward for "${taskData.name}" wasn't confirmed. Claim it from Discord's Quests page.`, 'warn');
-                                this.updateTask(questId, { ...taskData, claimState: 'FAILED' });
+                                this.log(`[Claim] Reward for "${taskData.name}" wasn't confirmed. Claim it from Discord's Quests page.`, "warn");
+                                this.updateTask(questId, { ...taskData, claimState: "FAILED" });
                             }
                         } catch (err) {
-                            this.log(`[Claim] Action required for "${taskData.name}". Check Discord UI for captcha.`, 'warn');
-                            this.updateTask(questId, { ...taskData, claimState: 'FAILED' });
+                            this.log(`[Claim] Action required for "${taskData.name}". Check Discord UI for captcha.`, "warn");
+                            this.updateTask(questId, { ...taskData, claimState: "FAILED" });
                         }
                     }
                 });
 
-                const closeBtn = getEl('qualquester-close');
+                const closeBtn = getEl("qualquester-close");
                 if (closeBtn) closeBtn.onclick = () => this.toggle();
-                const stopBtn = getEl('qualquester-stop');
+                const stopBtn = getEl("qualquester-stop");
                 if (stopBtn) stopBtn.onclick = () => this.shutdown();
 
-                this._hotkey = e => (e.key === '>' || (e.shiftKey && e.key === '.')) && this.toggle();
-                document.addEventListener('keydown', this._hotkey);
+                this._hotkey = e => (e.key === ">" || (e.shiftKey && e.key === ".")) && this.toggle();
+                document.addEventListener("keydown", this._hotkey);
 
-                getEl('qualquester-opts')?.addEventListener('click', () => {
-                    const panel = getEl('qualquester-options-panel');
+                getEl("qualquester-opts")?.addEventListener("click", () => {
+                    const panel = getEl("qualquester-options-panel");
                     if (!panel) return;
-                    const open = panel.style.display === 'none';
-                    panel.style.display = open ? '' : 'none';
-                    const list = getEl('qualquester-quest-list');
-                    if (list) list.style.display = open ? 'none' : '';
-                    const actions = document.querySelector('#qualquester-picker-form .picker-actions, #orion-picker-form .picker-actions');
-                    if (actions) actions.style.display = open ? 'none' : '';
+                    const open = panel.style.display === "none";
+                    panel.style.display = open ? "" : "none";
+                    const list = getEl("qualquester-quest-list");
+                    if (list) list.style.display = open ? "none" : "";
+                    const actions = document.querySelector("#qualquester-picker-form .picker-actions, #orion-picker-form .picker-actions");
+                    if (actions) actions.style.display = open ? "none" : "";
                 });
 
                 this.startTicker();
@@ -606,7 +612,7 @@ export function launchQualquester() {
 
             toggle() {
                 if (!this.root?.parentElement) return;
-                this.root.style.display = this.root.style.display === 'none' ? 'flex' : 'none';
+                this.root.style.display = this.root.style.display === "none" ? "flex" : "none";
             },
 
             shutdown() {
@@ -615,10 +621,10 @@ export function launchQualquester() {
                 this.log("[System] Stopping script & cleaning up...", "warn");
 
                 if (this.tickerId) clearInterval(this.tickerId);
-                if (this._hotkey) { document.removeEventListener('keydown', this._hotkey); this._hotkey = null; }
+                if (this._hotkey) { document.removeEventListener("keydown", this._hotkey); this._hotkey = null; }
 
                 for (const cleanupFn of RUNTIME.cleanups) {
-                    try { cleanupFn(); } catch (e) { this.log(`[Cleanup] ${e.message}`, 'debug'); }
+                    try { cleanupFn(); } catch (e) { this.log(`[Cleanup] ${e.message}`, "debug"); }
                 }
                 RUNTIME.cleanups.clear();
 
@@ -627,8 +633,8 @@ export function launchQualquester() {
                 window.qualquesterLock = false;
                 window.orionLock = false;
 
-                const styles = document.getElementById('qualquester-styles') || document.getElementById('orion-styles');
-                const root = this.root;
+                const styles = document.getElementById("qualquester-styles") || document.getElementById("orion-styles");
+                const { root } = this;
                 setTimeout(() => {
                     if (styles?.parentElement) styles.remove();
                     if (root?.parentElement) root.remove();
@@ -678,15 +684,15 @@ export function launchQualquester() {
                     if (card) {
                         const pct = this._getPct(newData);
 
-                        const iconContainer = card.querySelector('.task-icon');
-                        if (iconContainer) iconContainer.style.setProperty('--p', `${pct}%`);
+                        const iconContainer = card.querySelector(".task-icon");
+                        if (iconContainer) iconContainer.style.setProperty("--p", `${pct}%`);
 
-                        const overlay = card.querySelector('.task-icon-overlay');
+                        const overlay = card.querySelector(".task-icon-overlay");
                         if (overlay) overlay.textContent = `${Math.floor(pct)}%`;
 
-                        const progressText = card.querySelector('.progress-text');
+                        const progressText = card.querySelector(".progress-text");
                         if (progressText) {
-                            const unit = newData.type === 'ACHIEVEMENT' ? '' : 's';
+                            const unit = newData.type === "ACHIEVEMENT" ? "" : "s";
                             progressText.textContent = `${Math.min(Math.floor(newData.cur), newData.max)} / ${newData.max}${unit}`;
                         }
                         return;
@@ -703,25 +709,25 @@ export function launchQualquester() {
                 }
             },
 
-            log(msg, type = 'info') {
+            log(msg, type = "info") {
                 const colors = { info: "#5865F2", success: "#3BA55C", warn: "#faa61a", err: "#f04747", debug: "#999" };
                 console.log(`%c[QUALQUESTER] %c${msg}`, `color: ${CONFIG.THEME}; font-weight: bold;`, `color: ${colors[type] || colors.info}`);
                 try {
-                    const box = document.getElementById('qualquester-logs') || document.getElementById('orion-logs');
-                    if (box && type !== 'debug') {
-                        const el = document.createElement('div'); el.className = `log-item c-${type}`;
-                        el.innerHTML = `<span class="log-ts">${new Date().toLocaleTimeString().split(' ')[0]}</span> <span>${esc(msg)}</span>`;
+                    const box = document.getElementById("qualquester-logs") || document.getElementById("orion-logs");
+                    if (box && type !== "debug") {
+                        const el = document.createElement("div"); el.className = `log-item c-${type}`;
+                        el.innerHTML = `<span class="log-ts">${new Date().toLocaleTimeString().split(" ")[0]}</span> <span>${esc(msg)}</span>`;
                         box.appendChild(el); box.scrollTop = box.scrollHeight;
                         while (box.children.length > CONFIG.MAX_LOG_ITEMS) box.firstChild.remove();
                     }
-                } catch (e) { console.debug('[Logger] DOM error:', e.message); }
+                } catch (e) { console.debug("[Logger] DOM error:", e.message); }
             },
 
             render() {
-                if (document.getElementById('qualquester-picker-form') || document.getElementById('orion-picker-form')) return;
-                const body = document.getElementById('qualquester-body') || document.getElementById('orion-body');
+                if (document.getElementById("qualquester-picker-form") || document.getElementById("orion-picker-form")) return;
+                const body = document.getElementById("qualquester-body") || document.getElementById("orion-body");
                 if (!body) return;
-                if (!this.tasks.size) return body.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">Waiting for tasks...</div>`;
+                if (!this.tasks.size) return body.innerHTML = "<div style=\"text-align:center; padding:30px; color:var(--text-muted); font-size:13px;\">Waiting for tasks...</div>";
 
                 const sorted = [...this.tasks.entries()].sort((a, b) => {
                     const ta = a[1], tb = b[1];
@@ -742,39 +748,39 @@ export function launchQualquester() {
                         t.done ? ICONS.CHECK :
                         t.failed ? ICONS.STOP :
                         t.pending ? ICONS.CLOCK :
-                        t.type === 'VIDEO' ? ICONS.VIDEO :
-                        t.type === 'ACHIEVEMENT' ? ICONS.ACTIVITY :
-                        t.type?.includes('GAME') ? ICONS.GAME :
-                        t.type?.includes('STREAM') ? ICONS.STREAM :
+                        t.type === "VIDEO" ? ICONS.VIDEO :
+                        t.type === "ACHIEVEMENT" ? ICONS.ACTIVITY :
+                        t.type?.includes("GAME") ? ICONS.GAME :
+                        t.type?.includes("STREAM") ? ICONS.STREAM :
                         ICONS.BOLT;
 
-                    let statusText = t.status === 'CLAIMED' ? 'CLAIMED' : t.done ? 'COMPLETED' : t.status;
-                    let progressLabel = t.pending ? 'In Queue' : t.failed ? 'Aborted' : 'Progress';
-                    const unit = t.type === 'ACHIEVEMENT' ? '' : 's';
+                    let statusText = t.status === "CLAIMED" ? "CLAIMED" : t.done ? "COMPLETED" : t.status;
+                    let progressLabel = t.pending ? "In Queue" : t.failed ? "Aborted" : "Progress";
+                    const unit = t.type === "ACHIEVEMENT" ? "" : "s";
 
-                    let actionBtn = '';
+                    let actionBtn = "";
 
                     if (t.claimable) {
-                        if (t.claimState === 'WAITING') actionBtn = `<button class="claim-btn" disabled>WAITING...</button>`;
-                        else if (t.claimState === 'FAILED') actionBtn = `<button class="claim-btn failed" disabled>ACTION REQUIRED</button>`;
+                        if (t.claimState === "WAITING") actionBtn = "<button class=\"claim-btn\" disabled>WAITING...</button>";
+                        else if (t.claimState === "FAILED") actionBtn = "<button class=\"claim-btn failed\" disabled>ACTION REQUIRED</button>";
                         else actionBtn = `<button class="claim-btn" data-id="${esc(id)}">CLAIM REWARD</button>`;
-                    } else if (t.actionRequired === 'ENROLL') {
-                        statusText = 'ACTION REQUIRED'; progressLabel = 'Accept quest in Discord';
-                        actionBtn = `<button class="goto-btn">GO TO QUESTS</button>`;
-                    } else if (t.type === 'ACHIEVEMENT' && t.status === 'RUNNING') {
-                        statusText = 'ACTION REQUIRED'; progressLabel = 'Please, complete manually';
-                        actionBtn = `<button class="goto-btn">GO TO QUESTS</button>`;
+                    } else if (t.actionRequired === "ENROLL") {
+                        statusText = "ACTION REQUIRED"; progressLabel = "Accept quest in Discord";
+                        actionBtn = "<button class=\"goto-btn\">GO TO QUESTS</button>";
+                    } else if (t.type === "ACHIEVEMENT" && t.status === "RUNNING") {
+                        statusText = "ACTION REQUIRED"; progressLabel = "Please, complete manually";
+                        actionBtn = "<button class=\"goto-btn\">GO TO QUESTS</button>";
                     }
 
-                    const stateClass = t.done ? 'done' : t.failed ? 'failed' : t.pending ? 'pending' : 'running';
-                    const removingClass = t.removing ? 'removing' : '';
+                    const stateClass = t.done ? "done" : t.failed ? "failed" : t.pending ? "pending" : "running";
+                    const removingClass = t.removing ? "removing" : "";
 
-                    let taskMetaHtml = '';
+                    let taskMetaHtml = "";
                     if (!t.done) {
                         taskMetaHtml = `
                         <div class="task-meta">
                             <span>${progressLabel}</span>
-                            ${actionBtn ? '' : `<span class="progress-text">${Math.min(Math.floor(t.cur), t.max)} / ${t.max}${unit}</span>`}
+                            ${actionBtn ? "" : `<span class="progress-text">${Math.min(Math.floor(t.cur), t.max)} / ${t.max}${unit}</span>`}
                         </div>`;
                     }
 
@@ -782,31 +788,31 @@ export function launchQualquester() {
                     <div id="qualquester-task-${esc(id)}" class="task-card ${stateClass} ${removingClass}">
                         <div class="task-icon" style="--p: ${pct}%">
                             <div class="task-icon-inner">${icon}</div>
-                            ${stateClass === 'running' ? `<div class="task-icon-overlay">${Math.floor(pct)}%</div>` : ''}
+                            ${stateClass === "running" ? `<div class="task-icon-overlay">${Math.floor(pct)}%</div>` : ""}
                         </div>
                         <div class="task-info">
                             <div class="task-status">${statusText}</div>
                             <div class="task-name" title="${esc(t.name)}">${esc(t.name)}</div>
                             ${taskMetaHtml}
                         </div>
-                        ${actionBtn ? `<div class="task-actions">${actionBtn}</div>` : ''}
+                        ${actionBtn ? `<div class="task-actions">${actionBtn}</div>` : ""}
                     </div>`;
-                }).join('');
+                }).join("");
             },
 
             showQuestPicker(quests) {
-                return new Promise((resolve) => {
-                    const body = document.getElementById('qualquester-body') || document.getElementById('orion-body');
-                    const logs = document.getElementById('qualquester-logs') || document.getElementById('orion-logs');
+                return new Promise(resolve => {
+                    const body = document.getElementById("qualquester-body") || document.getElementById("orion-body");
+                    const logs = document.getElementById("qualquester-logs") || document.getElementById("orion-logs");
 
-                    const closePicker = (data) => {
-                        if (logs) logs.style.display = 'block';
-                        if (body) { body.classList.remove('picker-mode'); body.innerHTML = ''; }
+                    const closePicker = data => {
+                        if (logs) logs.style.display = "block";
+                        if (body) { body.classList.remove("picker-mode"); body.innerHTML = ""; }
                         resolve(data);
                     };
 
                     if (!body) return closePicker({ selectedQuests: new Set(), autoEnroll: false, autoClaim: false, playSound: false });
-                    if (logs) logs.style.display = 'none';
+                    if (logs) logs.style.display = "none";
 
                     const items = [];
                     const rewardTypes = new Map();
@@ -822,7 +828,7 @@ export function launchQualquester() {
 
                         const typeData = Tasks.detectType(cfg, q.config?.application?.id);
                         if (!typeData) return;
-                        if (!SYS.IS_DESKTOP && (typeData.type === 'GAME' || typeData.type === 'STREAM')) return;
+                        if (!SYS.IS_DESKTOP && (typeData.type === "GAME" || typeData.type === "STREAM")) return;
 
                         const rw = q.config?.rewardsConfig?.rewards?.[0];
                         const orbs = orbReward(q.config);
@@ -831,7 +837,7 @@ export function launchQualquester() {
 
                         const meta = REWARD_META[rewardType] ?? REWARD_FALLBACK;
 
-                        const displayType = typeData.type === 'WATCH_VIDEO' ? 'VIDEO' : typeData.type;
+                        const displayType = typeData.type === "WATCH_VIDEO" ? "VIDEO" : typeData.type;
                         questTypes.add(displayType);
 
                         if (!rewardTypes.has(rewardType)) {
@@ -853,7 +859,7 @@ export function launchQualquester() {
 
                     if (!items.length) return closePicker({ selectedQuests: new Set(), autoEnroll: false, autoClaim: false, playSound: false });
 
-                    const buildCard = (q) => `
+                    const buildCard = q => `
                         <label class="quest-pick" data-rt="${q.rewardType}" data-qt="${q.type}" data-orbs="${q.orbs}" style="border-left-color: ${q.color};">
                             <input type="checkbox" name="quests" value="${q.id}" class="native-cb" checked>
                             <div class="task-info">
@@ -868,7 +874,7 @@ export function launchQualquester() {
                     const buildToggle = (name, label, isChecked) => `
                         <div class="qualquester-option">
                             <span class="qualquester-option-label">${label}</span>
-                            <input type="checkbox" name="${name}" class="native-toggle" ${isChecked ? 'checked' : ''}>
+                            <input type="checkbox" name="${name}" class="native-toggle" ${isChecked ? "checked" : ""}>
                         </div>`;
 
                     body.innerHTML = `
@@ -877,25 +883,25 @@ export function launchQualquester() {
                                 ${rewardTypes.size > 1 ? `
                                     <div class="picker-section-title">Filter By Reward</div>
                                     <div class="reward-filters">
-                                        ${[...rewardTypes.values()].map(rt => `<button type="button" class="reward-filter" data-rt="${rt.type}" style="color: ${rt.color}; border-color: ${rt.color};">${rt.label} (${rt.count})</button>`).join('')}
+                                        ${[...rewardTypes.values()].map(rt => `<button type="button" class="reward-filter" data-rt="${rt.type}" style="color: ${rt.color}; border-color: ${rt.color};">${rt.label} (${rt.count})</button>`).join("")}
                                     </div>
-                                ` : ''}
+                                ` : ""}
                                 ${questTypes.size > 1 ? `
                                     <div class="picker-section-title">Filter By Type</div>
                                     <div class="reward-filters">
-                                        ${[...questTypes].map(t => `<button type="button" class="type-filter" data-qt="${t}">${t}</button>`).join('')}
+                                        ${[...questTypes].map(t => `<button type="button" class="type-filter" data-qt="${t}">${t}</button>`).join("")}
                                     </div>
-                                ` : ''}
+                                ` : ""}
                                 <div class="picker-section-title">Options</div>
                                 <div class="picker-options">
-                                    ${buildToggle('autoEnroll', 'Auto-enroll in quests', RUNTIME.autoEnroll)}
-                                    ${buildToggle('autoClaim', 'Auto-claim rewards', RUNTIME.autoClaim)}
-                                    ${buildToggle('playSound', 'Sound on completion', RUNTIME.playSound)}
-                                    ${buildToggle('randomDelay', 'Random 1-30min delay between cycles', RUNTIME.randomDelay)}
+                                    ${buildToggle("autoEnroll", "Auto-enroll in quests", RUNTIME.autoEnroll)}
+                                    ${buildToggle("autoClaim", "Auto-claim rewards", RUNTIME.autoClaim)}
+                                    ${buildToggle("playSound", "Sound on completion", RUNTIME.playSound)}
+                                    ${buildToggle("randomDelay", "Random 1-30min delay between cycles", RUNTIME.randomDelay)}
                                 </div>
                             </div>
 
-                            <div id="qualquester-quest-list" class="picker-quest-list">${items.map(buildCard).join('')}
+                            <div id="qualquester-quest-list" class="picker-quest-list">${items.map(buildCard).join("")}
                                 <div id="qualquester-no-quests" style="display: none; margin: auto; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
                                     No quests available
                                 </div>
@@ -909,79 +915,79 @@ export function launchQualquester() {
                             </div>
                         </form>`;
 
-                    const form = document.getElementById('qualquester-picker-form') || document.getElementById('orion-picker-form');
-                    const selectAllBtn = document.getElementById('select-all-btn');
-                    const startBtn = document.getElementById('start-btn');
+                    const form = document.getElementById("qualquester-picker-form") || document.getElementById("orion-picker-form");
+                    const selectAllBtn = document.getElementById("select-all-btn");
+                    const startBtn = document.getElementById("start-btn");
 
                     const getVisibleCheckboxes = () => Array.from(form.querySelectorAll('.quest-pick input[type="checkbox"]'))
-                        .filter(cb => !cb.closest('.quest-pick').classList.contains('hidden'));
+                        .filter(cb => !cb.closest(".quest-pick").classList.contains("hidden"));
 
-                    let balanceText = '';
+                    let balanceText = "";
 
                     const syncUI = () => {
                         const visibleCbs = getVisibleCheckboxes();
                         const totalChecked = visibleCbs.filter(cb => cb.checked).length;
 
-                        const orbTotal = document.getElementById('qualquester-orb-total') || document.getElementById('orion-orb-total');
+                        const orbTotal = document.getElementById("qualquester-orb-total") || document.getElementById("orion-orb-total");
                         if (orbTotal) {
-                            const picked = visibleCbs.filter(cb => cb.checked).map(cb => cb.closest('.quest-pick'));
-                            const orbs = picked.reduce((total, el) => total + (Number(el?.getAttribute('data-orbs')) || 0), 0);
-                            const selectedText = orbs > 0 ? `${orbs} Orbs selected` : '';
-                            const text = [selectedText, balanceText].filter(Boolean).join(' · ');
+                            const picked = visibleCbs.filter(cb => cb.checked).map(cb => cb.closest(".quest-pick"));
+                            const orbs = picked.reduce((total, el) => total + (Number(el?.getAttribute("data-orbs")) || 0), 0);
+                            const selectedText = orbs > 0 ? `${orbs} Orbs selected` : "";
+                            const text = [selectedText, balanceText].filter(Boolean).join(" · ");
                             orbTotal.textContent = text;
-                            orbTotal.style.display = text ? 'block' : 'none';
+                            orbTotal.style.display = text ? "block" : "none";
                         }
 
-                        const startBtnText = document.getElementById('start-btn-text');
+                        const startBtnText = document.getElementById("start-btn-text");
                         if (startBtnText) startBtnText.textContent = `START (${totalChecked})`;
                         startBtn.disabled = totalChecked === 0;
 
                         if (visibleCbs.length === 0) {
                             selectAllBtn.disabled = true;
-                            selectAllBtn.textContent = 'SELECT ALL';
+                            selectAllBtn.textContent = "SELECT ALL";
                         } else {
                             selectAllBtn.disabled = false;
-                            selectAllBtn.textContent = visibleCbs.every(cb => cb.checked) ? 'DESELECT ALL' : 'SELECT ALL';
+                            selectAllBtn.textContent = visibleCbs.every(cb => cb.checked) ? "DESELECT ALL" : "SELECT ALL";
                         }
 
-                        const noQuestsMsg = document.getElementById('qualquester-no-quests') || document.getElementById('orion-no-quests');
+                        const noQuestsMsg = document.getElementById("qualquester-no-quests") || document.getElementById("orion-no-quests");
                         if (noQuestsMsg) {
-                            noQuestsMsg.style.display = visibleCbs.length === 0 ? 'block' : 'none';
+                            noQuestsMsg.style.display = visibleCbs.length === 0 ? "block" : "none";
                         }
                     };
 
-                    form.addEventListener('change', (e) => { if (e.target.name === 'quests') syncUI(); });
+                    form.addEventListener("change", e => { if (e.target.name === "quests") syncUI(); });
 
                     const activeRewards = new Set([...rewardTypes.keys()].map(String));
                     const activeTypes = new Set([...questTypes]);
 
                     const applyFilters = () => {
-                        form.querySelectorAll('.quest-pick').forEach(el => {
-                            const rt = el.getAttribute('data-rt');
-                            const qt = el.getAttribute('data-qt');
-                            el.classList.toggle('hidden', !(activeRewards.has(rt) && activeTypes.has(qt)));
+                        form.querySelectorAll(".quest-pick").forEach(el => {
+                            const rt = el.getAttribute("data-rt");
+                            const qt = el.getAttribute("data-qt");
+                            el.classList.toggle("hidden", !(activeRewards.has(rt) && activeTypes.has(qt)));
                         });
                         syncUI();
                     };
 
                     const FILTER_KINDS = [
-                        { cls: 'reward-filter', attr: 'data-rt', set: activeRewards },
-                        { cls: 'type-filter', attr: 'data-qt', set: activeTypes }
+                        { cls: "reward-filter", attr: "data-rt", set: activeRewards },
+                        { cls: "type-filter", attr: "data-qt", set: activeTypes }
                     ];
 
-                    form.addEventListener('click', (e) => {
+                    form.addEventListener("click", e => {
                         const kind = FILTER_KINDS.find(k => e.target.classList.contains(k.cls));
                         if (kind) {
                             e.preventDefault();
                             const value = e.target.getAttribute(kind.attr);
-                            e.target.classList.toggle('off');
-                            if (e.target.classList.contains('off')) kind.set.delete(value);
+                            e.target.classList.toggle("off");
+                            if (e.target.classList.contains("off")) kind.set.delete(value);
                             else kind.set.add(value);
                             applyFilters();
                             return;
                         }
 
-                        if (e.target.id === 'select-all-btn') {
+                        if (e.target.id === "select-all-btn") {
                             e.preventDefault();
                             const visibleCbs = getVisibleCheckboxes();
                             if (visibleCbs.length === 0) return;
@@ -992,7 +998,7 @@ export function launchQualquester() {
                         }
                     });
 
-                    form.addEventListener('submit', (e) => {
+                    form.addEventListener("submit", e => {
                         e.preventDefault();
 
                         const selected = getVisibleCheckboxes().filter(cb => cb.checked);
@@ -1002,26 +1008,26 @@ export function launchQualquester() {
 
                         closePicker({
                             selectedQuests: new Set(selected.map(cb => cb.value)),
-                            autoEnroll: data.has('autoEnroll'),
-                            autoClaim: data.has('autoClaim'),
-                            playSound: data.has('playSound'),
-                            randomDelay: data.has('randomDelay')
+                            autoEnroll: data.has("autoEnroll"),
+                            autoClaim: data.has("autoClaim"),
+                            playSound: data.has("playSound"),
+                            randomDelay: data.has("randomDelay")
                         });
                     });
 
-                    body.classList.add('picker-mode');
+                    body.classList.add("picker-mode");
                     syncUI();
 
                     readOrbBalance()
                         .then(balance => {
                             if (balance === null) {
-                                Logger.log('[System] Discord sent no Orb balance, so the picker shows none.', 'warn');
+                                Logger.log("[System] Discord sent no Orb balance, so the picker shows none.", "warn");
                                 return;
                             }
                             balanceText = `${balance} Orbs on the account`;
                             syncUI();
                         })
-                        .catch(e => Logger.log(`[System] Could not read the Orb balance: ${e?.message ?? e}`, 'warn'));
+                        .catch(e => Logger.log(`[System] Could not read the Orb balance: ${e?.message ?? e}`, "warn"));
                 });
             }
         };
@@ -1063,7 +1069,7 @@ export function launchQualquester() {
                             const delay = (e.body?.retry_after ?? Math.pow(2, req.attempts)) * 1000;
                             const isGlobal = e.body?.global === true;
 
-                            Logger.log(`[Network] Retry ${req.attempts}/${SYS.MAX_RETRIES} in ${(delay / 1000).toFixed(1)}s (HTTP ${err.status})`, 'warn');
+                            Logger.log(`[Network] Retry ${req.attempts}/${SYS.MAX_RETRIES} in ${(delay / 1000).toFixed(1)}s (HTTP ${err.status})`, "warn");
 
                             const retryJitter = rnd(200, 800);
 
@@ -1076,15 +1082,15 @@ export function launchQualquester() {
                                         this.queue.push(req);
                                         this.process();
                                     } else {
-                                        req.reject(new Error('Shutdown'));
+                                        req.reject(new Error("Shutdown"));
                                     }
                                 }, delay + retryJitter);
                             }
                         } else if (err.isClientError) {
-                            Logger.log(`[Network] HTTP ${err.status}: ${req.url}`, 'debug');
+                            Logger.log(`[Network] HTTP ${err.status}: ${req.url}`, "debug");
                             req.reject(e);
                         } else {
-                            Logger.log(`[Network] Request to ${req.url} failed: ${err.message}`, 'err');
+                            Logger.log(`[Network] Request to ${req.url} failed: ${err.message}`, "err");
                             req.reject(e);
                         }
                     }
@@ -1104,26 +1110,26 @@ export function launchQualquester() {
             savedShowCurrentGame: null,
             _unhide: null,
 
-            PATCHED: ['getRunningGames', 'getGameForPID', 'getVisibleGame', 'getVisibleRunningGames',
-                      'getRunningDiscordApplicationIds', 'getCandidateGames'],
+            PATCHED: ["getRunningGames", "getGameForPID", "getVisibleGame", "getVisibleRunningGames",
+                      "getRunningDiscordApplicationIds", "getCandidateGames"],
 
             init(Store) {
                 if (!Store) return;
                 this.real = {};
                 for (const name of this.PATCHED) {
-                    if (typeof Store[name] === 'function') this.real[name] = Store[name];
+                    if (typeof Store[name] === "function") this.real[name] = Store[name];
                 }
                 const absent = this.PATCHED.filter(n => !this.real[n]);
-                if (absent.length) Logger.log(`[Patcher] Store lacks ${absent.join(', ')}, not patching those.`, 'debug');
+                if (absent.length) Logger.log(`[Patcher] Store lacks ${absent.join(", ")}, not patching those.`, "debug");
             },
 
             toggle(on) {
                 const S = Mods.RunStore;
-                const real = this.real;
+                const { real } = this;
 
                 if (on && !this.active) {
                     S.getRunningGames = () => [...real.getRunningGames.call(S), ...this.games];
-                    S.getGameForPID = (pid) => this.games.find(g => g.pid === pid) || real.getGameForPID.call(S, pid);
+                    S.getGameForPID = pid => this.games.find(g => g.pid === pid) || real.getGameForPID.call(S, pid);
 
                     if (real.getVisibleGame) S.getVisibleGame = () => this.games[0] ?? real.getVisibleGame.call(S);
                     if (real.getVisibleRunningGames) S.getVisibleRunningGames = () => [...real.getVisibleRunningGames.call(S), ...this.games];
@@ -1147,7 +1153,7 @@ export function launchQualquester() {
                 const shouldSuppress = CONFIG.HIDE_ACTIVITY && this.games.length > 0;
 
                 if (!setting) {
-                    if (shouldSuppress) Logger.log('[Patcher] status.showCurrentGame not found, cannot hide activity.', 'warn');
+                    if (shouldSuppress) Logger.log("[Patcher] status.showCurrentGame not found, cannot hide activity.", "warn");
                     return;
                 }
 
@@ -1156,25 +1162,25 @@ export function launchQualquester() {
                         this.savedShowCurrentGame = setting.getSetting() !== false;
                         if (this.savedShowCurrentGame) {
                             Promise.resolve(setting.updateSetting(false)).catch(e =>
-                                Logger.log(`[Patcher] Could not turn showCurrentGame off, activity stays visible: ${e.message}`, 'warn'));
+                                Logger.log(`[Patcher] Could not turn showCurrentGame off, activity stays visible: ${e.message}`, "warn"));
                             this._unhide = () => { try { setting.updateSetting(true); } catch (_) { } };
-                            window.addEventListener('pagehide', this._unhide);
-                            Logger.log('[Patcher] Your "Display current activity as a status message" setting is off while quests run. STOP puts it back.', 'warn');
+                            window.addEventListener("pagehide", this._unhide);
+                            Logger.log('[Patcher] Your "Display current activity as a status message" setting is off while quests run. STOP puts it back.', "warn");
                         }
                     } catch (e) {
                         this.savedShowCurrentGame = null;
-                        Logger.log(`[Patcher] showCurrentGame read failed, cannot hide activity: ${e.message}`, 'warn');
+                        Logger.log(`[Patcher] showCurrentGame read failed, cannot hide activity: ${e.message}`, "warn");
                     }
                 } else if (!shouldSuppress && this.savedShowCurrentGame !== null) {
                     const restore = this.savedShowCurrentGame;
                     this.savedShowCurrentGame = null;
-                    if (this._unhide) { window.removeEventListener('pagehide', this._unhide); this._unhide = null; }
+                    if (this._unhide) { window.removeEventListener("pagehide", this._unhide); this._unhide = null; }
                     if (restore) {
                         try {
                             Promise.resolve(setting.updateSetting(true)).catch(e =>
-                                Logger.log(`[Patcher] Failed to restore showCurrentGame: ${e.message}`, 'err'));
+                                Logger.log(`[Patcher] Failed to restore showCurrentGame: ${e.message}`, "err"));
                         } catch (e) {
-                            Logger.log(`[Patcher] Failed to restore showCurrentGame: ${e.message}`, 'err');
+                            Logger.log(`[Patcher] Failed to restore showCurrentGame: ${e.message}`, "err");
                         }
                     }
                 }
@@ -1232,7 +1238,7 @@ export function launchQualquester() {
                         } : null
                     });
                 } catch (e) {
-                    Logger.log(`[RPC Cleanup] ${e.message}`, 'debug');
+                    Logger.log(`[RPC Cleanup] ${e.message}`, "debug");
                 }
             },
 
@@ -1256,7 +1262,7 @@ export function launchQualquester() {
             if (!parts.length) {
                 try { parts.push(JSON.stringify(e).slice(0, 160)); } catch { parts.push(String(e)); }
             }
-            return parts.join(', ') || 'no detail';
+            return parts.join(", ") || "no detail";
         };
 
         /* ── task handlers ──────────────────────────────────────────── */
@@ -1355,7 +1361,7 @@ export function launchQualquester() {
                         id: appId
                     };
                 } catch (e) {
-                    Logger.log(`[FetchGame] Fallback for ${appName}: ${e?.message ?? e}`, 'debug');
+                    Logger.log(`[FetchGame] Fallback for ${appName}: ${e?.message ?? e}`, "debug");
                     const cleanName = this.sanitize(appName);
                     const safeExe = `${cleanName.replace(/\s+/g, "")}.exe`;
                     return {
@@ -1377,10 +1383,10 @@ export function launchQualquester() {
             failTask(q, t, reason) {
                 const currentProgress = Logger.tasks.get(q.id)?.cur ?? 0;
                 Logger.updateTask(q.id, { name: t.name, type: t.type, cur: currentProgress, max: t.target, status: "FAILED" });
-                Logger.log(`[Task] Aborted "${t.name}": ${reason}`, 'err');
+                Logger.log(`[Task] Aborted "${t.name}": ${reason}`, "err");
                 Tasks.skipped.add(q.id);
-                recordOutcome(Tasks.outcomes, q.id, 'failed');
-                setTimeout(() => Logger.removeTask(q.id), 2000); 
+                recordOutcome(Tasks.outcomes, q.id, "failed");
+                setTimeout(() => Logger.removeTask(q.id), 2000);
             },
 
             async VIDEO(q, t, s) {
@@ -1412,23 +1418,23 @@ export function launchQualquester() {
                         failCount++;
                         const err = ErrorHandler.classify(e);
                         if (err.isClientError) {
-                            Logger.log(`[Task] Video quest unavailable (HTTP ${err.status}). Skipping.`, 'warn');
+                            Logger.log(`[Task] Video quest unavailable (HTTP ${err.status}). Skipping.`, "warn");
                             return Tasks.failTask(q, t, `Client Error ${err.status}`);
                         }
                         if (failCount >= SYS.MAX_TASK_FAILURES) {
-                            return Tasks.failTask(q, t, 'Too many network failures');
+                            return Tasks.failTask(q, t, "Too many network failures");
                         }
-                        Logger.log(`[Task] VIDEO progress failed (${failCount}/${SYS.MAX_TASK_FAILURES}): ${err.message}`, 'debug');
+                        Logger.log(`[Task] VIDEO progress failed (${failCount}/${SYS.MAX_TASK_FAILURES}): ${err.message}`, "debug");
                     }
 
                     Logger.updateTask(q.id, { name: t.name, type: "VIDEO", cur, max: t.target, status: "RUNNING" });
 
                     if (Date.now() - startTime > SYS.MAX_TIME) {
-                        return Tasks.failTask(q, t, 'Timeout exceeded');
+                        return Tasks.failTask(q, t, "Timeout exceeded");
                     }
                 }
                 if (RUNTIME.running) {
-                    Logger.log(`[Task] VIDEO "${t.name}" done in ${calls} API calls`, 'debug');
+                    Logger.log(`[Task] VIDEO "${t.name}" done in ${calls} API calls`, "debug");
                     Tasks.finish(q, t);
                 }
             },
@@ -1449,7 +1455,7 @@ export function launchQualquester() {
                         id: gameData.id, name: gameData.name, icon: gameData.icon,
                         pid, pidPath: [pid], processName: gameData.name, start: Date.now(),
                         exeName: gameData.exeName, exePath: gameData.exePath, cmdLine: gameData.cmdLine,
-                        executables: [{ os: 'win32', name: gameData.exeName, is_launcher: false }],
+                        executables: [{ os: "win32", name: gameData.exeName, is_launcher: false }],
                         windowHandle: 0, fullscreenType: 0, overlay: true, sandboxed: false,
                         hidden: false, isLauncher: false
                     };
@@ -1457,7 +1463,6 @@ export function launchQualquester() {
                     let cleanupHook;
                     let cleaned = false;
                     let spoofReleased = false;
-                    let safetyTimer;
                     let watchdogTimer;
                     let beats = 0;
                     let failedBeats = 0;
@@ -1482,7 +1487,7 @@ export function launchQualquester() {
 
                     const seeded = Tasks.readProgress(s, key);
                     Logger.updateTask(q.id, { name: t.name, type, cur: seeded, max: t.target, status: "RUNNING" });
-                    Logger.log(`[Task] Started ${type}: ${gameData.name}`, 'info');
+                    Logger.log(`[Task] Started ${type}: ${gameData.name}`, "info");
 
                     const stopWatching = () => {
                         if (cleaned) return;
@@ -1490,17 +1495,17 @@ export function launchQualquester() {
                         clearTimeout(safetyTimer);
                         clearTimeout(watchdogTimer);
                         try { Mods.Dispatcher?.unsubscribe(CONST.EVT.HEARTBEAT, check); } catch (e) {
-                            Logger.log(`[Dispatcher] Unsubscribe failed: ${e.message}`, 'debug');
+                            Logger.log(`[Dispatcher] Unsubscribe failed: ${e.message}`, "debug");
                         }
                         try { Mods.Dispatcher?.unsubscribe(CONST.EVT.HEARTBEAT_FAIL, onFail); } catch (e) {
-                            Logger.log(`[Dispatcher] Unsubscribe failed: ${e.message}`, 'debug');
+                            Logger.log(`[Dispatcher] Unsubscribe failed: ${e.message}`, "debug");
                         }
                     };
 
                     const releaseSpoof = () => {
                         if (spoofReleased) return;
                         spoofReleased = true;
-                        try { cleanupHook(); } catch (e) { Logger.log(`[Task] Cleanup: ${e.message}`, 'debug'); }
+                        try { cleanupHook(); } catch (e) { Logger.log(`[Task] Cleanup: ${e.message}`, "debug"); }
                         RUNTIME.cleanups.delete(abort);
                     };
 
@@ -1511,7 +1516,7 @@ export function launchQualquester() {
                         if (!Number.isFinite(maxMinutes) || maxMinutes <= 0) return;
                         const maxMs = Math.round(maxMinutes * 60 * 1000);
                         const tailMs = rnd(Math.round(maxMs * 0.4), maxMs);
-                        Logger.log(`[Task] Holding ${type} "${gameData.name}" for ${Math.round(tailMs / 1000)}s after completion.`, 'debug');
+                        Logger.log(`[Task] Holding ${type} "${gameData.name}" for ${Math.round(tailMs / 1000)}s after completion.`, "debug");
                         const step = 500;
                         for (let waited = 0; waited < tailMs && RUNTIME.running && !spoofReleased; waited += step) {
                             await sleep(Math.min(step, tailMs - waited));
@@ -1520,8 +1525,8 @@ export function launchQualquester() {
 
                     const abort = () => { finish(); resolve(); };
 
-                    safetyTimer = setTimeout(() => {
-                        if (RUNTIME.running) Tasks.failTask(q, t, 'Timeout exceeded (25m)');
+                    const safetyTimer = setTimeout(() => {
+                        if (RUNTIME.running) Tasks.failTask(q, t, "Timeout exceeded (25m)");
                         finish();
                         resolve();
                     }, SYS.MAX_TIME);
@@ -1532,22 +1537,22 @@ export function launchQualquester() {
                             if (cleaned || !RUNTIME.running) return;
                             const failureTail = failedBeats > 0
                                 ? ` and ${failedBeats} failed beat(s), the last one ${lastFailure}`
-                                : '';
+                                : "";
                             Logger.log(beats === 0
                                 ? (failedBeats > 0
                                     ? `[Task] Discord never reported progress for "${t.name}". All ${failedBeats} heartbeat(s) it tried failed, the last one ${lastFailure}.`
                                     : `[Task] Discord never reported progress for "${t.name}". It is not accepting the injected process on this client, so there is nothing to wait for.`)
-                                : `[Task] Discord stopped reporting progress for "${t.name}" after ${beats} update(s)${failureTail}. Giving up instead of idling.`, 'err');
+                                : `[Task] Discord stopped reporting progress for "${t.name}" after ${beats} update(s)${failureTail}. Giving up instead of idling.`, "err");
                             Tasks.failTask(q, t, failedBeats > 0
                                 ? `No heartbeat from Discord (${failedBeats} failed beat(s))`
-                                : 'No heartbeat from Discord');
+                                : "No heartbeat from Discord");
                             finish();
                             resolve();
                         }, SYS.HEARTBEAT_GRACE);
                     };
                     armWatchdog();
 
-                    const check = (d) => {
+                    const check = d => {
                         if (!RUNTIME.running) { finish(); resolve(); return; }
                         if (d?.questId !== q.id) return;
 
@@ -1568,7 +1573,7 @@ export function launchQualquester() {
                         }
                     };
 
-                    const onFail = (d) => {
+                    const onFail = d => {
                         if (!RUNTIME.running) { finish(); resolve(); return; }
                         if (d?.questId !== q.id) return;
 
@@ -1577,14 +1582,14 @@ export function launchQualquester() {
                         lastFailure = describeHeartbeatError(d);
 
                         if (consecutiveFailures >= SYS.MAX_TASK_FAILURES) {
-                            Logger.log(`[Task] Discord's heartbeat for "${t.name}" failed ${consecutiveFailures} times in a row: ${lastFailure}. Giving up rather than waiting out the watchdog.`, 'err');
+                            Logger.log(`[Task] Discord's heartbeat for "${t.name}" failed ${consecutiveFailures} times in a row: ${lastFailure}. Giving up rather than waiting out the watchdog.`, "err");
                             Tasks.failTask(q, t, `Discord could not report progress (${lastFailure})`);
                             finish();
                             resolve();
                             return;
                         }
 
-                        Logger.log(`[Task] Discord's heartbeat for "${t.name}" failed (${consecutiveFailures}/${SYS.MAX_TASK_FAILURES}): ${lastFailure}`, 'debug');
+                        Logger.log(`[Task] Discord's heartbeat for "${t.name}" failed (${consecutiveFailures}/${SYS.MAX_TASK_FAILURES}): ${lastFailure}`, "debug");
                         if (beats > 0) armWatchdog();
                     };
 
@@ -1594,7 +1599,7 @@ export function launchQualquester() {
                 });
             },
 
-            _relayUrl: 'http://127.0.0.1:43210',
+            _relayUrl: "http://127.0.0.1:43210",
             _relayProbe: null,
             _relayProbeAt: 0,
             RELAY_PROBE_TTL: 60000,
@@ -1605,11 +1610,11 @@ export function launchQualquester() {
                 return this._relayProbe = (async () => {
                     try {
                         const r = await Promise.race([
-                            fetch(`${this._relayUrl}/health`, { method: 'GET', redirect: 'error' }),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('probe timeout')), 800))
+                            fetch(`${this._relayUrl}/health`, { method: "GET", redirect: "error" }),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error("probe timeout")), 800))
                         ]);
                         if (!RUNTIME.running) return false;
-                        if (r.ok) Logger.log('[Bypass] Orion Relay detected on 127.0.0.1:43210.', 'info');
+                        if (r.ok) Logger.log("[Bypass] Orion Relay detected on 127.0.0.1:43210.", "info");
                         return r.ok;
                     } catch (_) {
                         return false;
@@ -1619,29 +1624,29 @@ export function launchQualquester() {
 
             async _bypassPost(url, headers, jsonBody) {
                 const relayAvailable = await this._probeRelay();
-                if (!RUNTIME.running) throw new Error('Shutdown');
+                if (!RUNTIME.running) throw new Error("Shutdown");
                 if (relayAvailable) {
                     let r;
                     try {
                         r = await fetch(`${this._relayUrl}/proxy`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Orion-Relay': '1' },
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", "X-Orion-Relay": "1" },
                             body: JSON.stringify({ url, headers, body: jsonBody }),
-                            redirect: 'error'
+                            redirect: "error"
                         });
-                        if (!RUNTIME.running) throw new Error('Shutdown');
+                        if (!RUNTIME.running) throw new Error("Shutdown");
                     } catch (e) {
                         if (!RUNTIME.running) throw e;
                         this._relayProbe = null;
-                        Logger.log(`[Bypass] Relay stopped responding, trying other transports: ${e?.message ?? e}`, 'debug');
+                        Logger.log(`[Bypass] Relay stopped responding, trying other transports: ${e?.message ?? e}`, "debug");
                     }
                     if (r) {
                         if (!r.ok) {
                             const body = await r.text();
-                            if (!RUNTIME.running) throw new Error('Shutdown');
-                            if (r.status === 403 && body.includes('X-Orion-Relay')) {
+                            if (!RUNTIME.running) throw new Error("Shutdown");
+                            if (r.status === 403 && body.includes("X-Orion-Relay")) {
                                 this._relayProbe = null;
-                                Logger.log('[Bypass] The running Orion Relay is out of date. Trying other transports.', 'warn');
+                                Logger.log("[Bypass] The running Orion Relay is out of date. Trying other transports.", "warn");
                                 r = null;
                             } else {
                                 throw { status: r.status, body };
@@ -1650,7 +1655,7 @@ export function launchQualquester() {
                     }
                     if (r) {
                         const result = await r.json();
-                        if (!RUNTIME.running) throw new Error('Shutdown');
+                        if (!RUNTIME.running) throw new Error("Shutdown");
                         if (!result.ok) throw { status: result.status, body: result.body };
                         return result;
                     }
@@ -1660,21 +1665,21 @@ export function launchQualquester() {
                     const helper = window.VencordNative?.pluginHelpers?.OrionQuests;
                     if (helper) {
                         const u = new URL(url);
-                        const appId = u.hostname.split('.')[0];
-                        const questId = headers['X-Discord-Quest-ID'];
-                        const referrer = headers['Referer'];
-                        if (u.pathname.endsWith('/acf/authorize')) {
+                        const appId = u.hostname.split(".")[0];
+                        const questId = headers["X-Discord-Quest-ID"];
+                        const referrer = headers.Referer;
+                        if (u.pathname.endsWith("/acf/authorize")) {
                             const { code } = JSON.parse(jsonBody);
                             const r = await helper.discordsaysAuthorize({ appId, questId, authCode: code, referrer });
-                            if (!RUNTIME.running) throw new Error('Shutdown');
+                            if (!RUNTIME.running) throw new Error("Shutdown");
                             if (!r.ok) throw { status: r.status, body: r.body };
                             return { ok: true, status: r.status, body: r.body };
                         }
-                        if (u.pathname.endsWith('/acf/quest/progress')) {
+                        if (u.pathname.endsWith("/acf/quest/progress")) {
                             const { progress } = JSON.parse(jsonBody);
-                            const token = headers['X-Auth-Token'];
+                            const token = headers["X-Auth-Token"];
                             const r = await helper.discordsaysProgress({ appId, questId, token, target: progress, referrer });
-                            if (!RUNTIME.running) throw new Error('Shutdown');
+                            if (!RUNTIME.running) throw new Error("Shutdown");
                             if (!r.ok) throw { status: r.status, body: r.body };
                             return { ok: true, status: r.status, body: r.body };
                         }
@@ -1682,7 +1687,7 @@ export function launchQualquester() {
                 } catch (e) {
                     if (!RUNTIME.running) throw e;
                     if (e?.status) throw e;
-                    Logger.log(`[Bypass] VencordNative path errored: ${e?.message ?? e}`, 'debug');
+                    Logger.log(`[Bypass] VencordNative path errored: ${e?.message ?? e}`, "debug");
                 }
 
                 const dn = window.DiscordNative;
@@ -1692,15 +1697,15 @@ export function launchQualquester() {
                         () => dn.app?.makeRequest,
                     ];
                     for (const probe of probes) {
-                        if (!RUNTIME.running) throw new Error('Shutdown');
+                        if (!RUNTIME.running) throw new Error("Shutdown");
                         try {
                             const fn = probe();
-                            if (typeof fn === 'function') {
-                                const r = await fn.call(dn, { method: 'POST', url, headers, body: jsonBody });
-                                if (!RUNTIME.running) throw new Error('Shutdown');
+                            if (typeof fn === "function") {
+                                const r = await fn.call(dn, { method: "POST", url, headers, body: jsonBody });
+                                if (!RUNTIME.running) throw new Error("Shutdown");
                                 if (r && (r.status || r.statusCode)) {
                                     const status = r.status ?? r.statusCode;
-                                    return { ok: status >= 200 && status < 300, status, body: r.body ?? r.responseText ?? '' };
+                                    return { ok: status >= 200 && status < 300, status, body: r.body ?? r.responseText ?? "" };
                                 }
                             }
                         } catch (e) {
@@ -1709,11 +1714,11 @@ export function launchQualquester() {
                     }
                 }
 
-                if (!RUNTIME.running) throw new Error('Shutdown');
-                const res = await fetch(url, { method: 'POST', headers, body: jsonBody, redirect: 'error' });
-                if (!RUNTIME.running) throw new Error('Shutdown');
+                if (!RUNTIME.running) throw new Error("Shutdown");
+                const res = await fetch(url, { method: "POST", headers, body: jsonBody, redirect: "error" });
+                if (!RUNTIME.running) throw new Error("Shutdown");
                 const body = await res.text();
-                if (!RUNTIME.running) throw new Error('Shutdown');
+                if (!RUNTIME.running) throw new Error("Shutdown");
                 if (!res.ok) throw { status: res.status, body };
                 return { ok: true, status: res.status, body };
             },
@@ -1722,23 +1727,23 @@ export function launchQualquester() {
                 const appId = t.appId || q.config?.application?.id;
                 let reason = null;
                 if (!appId) {
-                    reason = 'this quest carries no application id, so there is nothing to authorize against';
+                    reason = "this quest carries no application id, so there is nothing to authorize against";
                     return { ok: false, reason };
                 }
                 if (!/^\d+$/.test(String(appId))) {
                     reason = `the quest's application id ("${appId}") is not numeric, so it was refused before any request went out`;
-                    Logger.log(`[Bypass] Refusing non-numeric appId "${appId}".`, 'warn');
+                    Logger.log(`[Bypass] Refusing non-numeric appId "${appId}".`, "warn");
                     return { ok: false, reason };
                 }
 
                 let preGrantIds;
                 try {
-                    const before = await Mods.API.get({ url: '/oauth2/tokens' });
+                    const before = await Mods.API.get({ url: "/oauth2/tokens" });
                     if (!RUNTIME.running) return { ok: false, reason };
                     preGrantIds = new Set((before?.body || []).filter(tk => tk.application?.id === appId).map(tk => tk.id));
                 } catch (e) {
                     if (!RUNTIME.running) return { ok: false, reason };
-                    Logger.log(`[Bypass] Couldn't snapshot existing grants: ${e?.message}`, 'warn');
+                    Logger.log(`[Bypass] Couldn't snapshot existing grants: ${e?.message}`, "warn");
                     return { ok: false, reason };
                 }
 
@@ -1754,69 +1759,69 @@ export function launchQualquester() {
                     const consented = await Consent.ask(appId, appName);
                     if (!RUNTIME.running) return { ok: false, reason };
                     if (!consented) {
-                        Logger.log(`[Bypass] Consent declined for "${t.name}". Not authorizing the app.`, 'warn');
+                        Logger.log(`[Bypass] Consent declined for "${t.name}". Not authorizing the app.`, "warn");
                         return { ok: false, reason };
                     }
 
-                    Logger.log(`[Bypass] Trying Discord Says auth flow for "${t.name}"...`, 'info');
+                    Logger.log(`[Bypass] Trying Discord Says auth flow for "${t.name}"...`, "info");
 
                     const authRes = await Mods.API.post({
-                        url: '/oauth2/authorize',
+                        url: "/oauth2/authorize",
                         query: {
-                            response_type: 'code',
+                            response_type: "code",
                             client_id: appId,
-                            scope: 'identify applications.commands applications.entitlements'
+                            scope: "identify applications.commands applications.entitlements"
                         },
                         body: {
-                            permissions: '0',
+                            permissions: "0",
                             authorize: true,
                             integration_type: 1,
-                            location_context: { guild_id: '10000', channel_id: '10000', channel_type: 10000 }
+                            location_context: { guild_id: "10000", channel_id: "10000", channel_type: 10000 }
                         }
                     });
                     if (!RUNTIME.running) return { ok: false, reason };
                     const location = authRes?.body?.location;
-                    if (!location) throw new Error('no location in /oauth2/authorize response');
-                    const authCode = new URL(location).searchParams.get('code');
-                    if (!authCode) throw new Error('no code in authorize location');
+                    if (!location) throw new Error("no location in /oauth2/authorize response");
+                    const authCode = new URL(location).searchParams.get("code");
+                    if (!authCode) throw new Error("no code in authorize location");
 
                     const ticketRes = await Mods.API.post({ url: `/applications/${appId}/proxy-tickets`, body: {} });
                     if (!RUNTIME.running) return { ok: false, reason };
                     const proxyTicket = ticketRes?.body?.ticket;
-                    if (!proxyTicket) throw new Error('no proxy ticket');
+                    if (!proxyTicket) throw new Error("no proxy ticket");
 
                     const referrer = `https://${appId}.discordsays.com/?instance_id=example-cl-instance&platform=desktop&discord_proxy_ticket=${encodeURIComponent(proxyTicket)}`;
 
                     const dsAuthRes = await Tasks._bypassPost(
                         `https://${appId}.discordsays.com/.proxy/acf/authorize`,
-                        { 'Content-Type': 'application/json', 'X-Auth-Token': '', 'X-Discord-Quest-ID': q.id, 'Referer': referrer },
+                        { "Content-Type": "application/json", "X-Auth-Token": "", "X-Discord-Quest-ID": q.id, "Referer": referrer },
                         JSON.stringify({ code: authCode })
                     );
                     if (!RUNTIME.running) return { ok: false, reason };
                     let dsToken;
                     try { dsToken = JSON.parse(dsAuthRes.body)?.token; }
-                    catch { throw new Error('discordsays returned non-JSON: ' + String(dsAuthRes.body).slice(0, 120)); }
-                    if (!dsToken) throw new Error('no discordsays token');
+                    catch { throw new Error("discordsays returned non-JSON: " + String(dsAuthRes.body).slice(0, 120)); }
+                    if (!dsToken) throw new Error("no discordsays token");
 
                     await Tasks._bypassPost(
                         `https://${appId}.discordsays.com/.proxy/acf/quest/progress`,
-                        { 'Content-Type': 'application/json', 'X-Auth-Token': dsToken, 'X-Discord-Quest-ID': q.id, 'Referer': referrer },
+                        { "Content-Type": "application/json", "X-Auth-Token": dsToken, "X-Discord-Quest-ID": q.id, "Referer": referrer },
                         JSON.stringify({ progress: t.target })
                     );
                     if (!RUNTIME.running) return { ok: false, reason };
 
-                    Logger.log(`[Bypass] Success. "${t.name}" completed via Discord Says.`, 'success');
+                    Logger.log(`[Bypass] Success. "${t.name}" completed via Discord Says.`, "success");
                     return { ok: true, reason: null };
                 } catch (e) {
                     if (!RUNTIME.running) return { ok: false, reason };
                     if (e instanceof TypeError && /failed to fetch|networkerror/i.test(e.message)) {
-                        Logger.log(`[Bypass] Discord's CSP blocks reaching discordsays.com. Skipping "${t.name}".`, 'warn');
+                        Logger.log(`[Bypass] Discord's CSP blocks reaching discordsays.com. Skipping "${t.name}".`, "warn");
                         return { ok: false, reason };
                     }
                     const code = e?.body?.code;
                     if (code === 50165) {
-                        reason = 'the activity is age-gated or delisted';
-                        Logger.log(`[Bypass] "${t.name}" can't be launched (age-gated or delisted).`, 'warn');
+                        reason = "the activity is age-gated or delisted";
+                        Logger.log(`[Bypass] "${t.name}" can't be launched (age-gated or delisted).`, "warn");
                         return { ok: false, reason };
                     }
                     const parts = [];
@@ -1824,19 +1829,19 @@ export function launchQualquester() {
                     if (code) parts.push(`code ${code}`);
                     if (e?.body?.message) parts.push(e.body.message);
                     else if (e?.message) parts.push(e.message);
-                    else if (typeof e === 'string') parts.push(e);
+                    else if (typeof e === "string") parts.push(e);
                     else if (e) { try { parts.push(JSON.stringify(e).slice(0, 200)); } catch { parts.push(String(e)); } }
-                    reason = `the Discord Says bypass failed (${parts.join(', ') || 'unknown error'})`;
-                    Logger.log(`[Bypass] Failed: ${parts.join(', ') || 'unknown'}`, 'warn');
+                    reason = `the Discord Says bypass failed (${parts.join(", ") || "unknown error"})`;
+                    Logger.log(`[Bypass] Failed: ${parts.join(", ") || "unknown"}`, "warn");
                     return { ok: false, reason };
                 } finally {
                     if (preGrantIds) {
                         try {
-                            const after = await Mods.API.get({ url: '/oauth2/tokens' });
+                            const after = await Mods.API.get({ url: "/oauth2/tokens" });
                             const ours = (after?.body || []).filter(tk => tk.application?.id === appId && !preGrantIds.has(tk.id));
                             for (const g of ours) await Mods.API.del({ url: `/oauth2/tokens/${g.id}` });
                         } catch (e) {
-                            Logger.log(`[Bypass] Deauthorize cleanup non-fatal: ${e?.message}`, 'debug');
+                            Logger.log(`[Bypass] Deauthorize cleanup non-fatal: ${e?.message}`, "debug");
                         }
                     }
                 }
@@ -1848,8 +1853,8 @@ export function launchQualquester() {
                 const key = buildStreamKey();
 
                 if (key) {
-                    Logger.log(`[Task] Attempting heartbeat spoofing for "${t.name}"...`, 'info');
-                    const beat = { stream_key: key, application_id: String(t.appId || ''), terminal: false };
+                    Logger.log(`[Task] Attempting heartbeat spoofing for "${t.name}"...`, "info");
+                    const beat = { stream_key: key, application_id: String(t.appId || ""), terminal: false };
                     let cur = 0;
                     let failCount = 0;
 
@@ -1885,17 +1890,17 @@ export function launchQualquester() {
                 if (!RUNTIME.running) return;
                 if (bypass.ok) return Tasks.finish(q, t);
 
-                Logger.log(`[Task] Skipping "${t.name}". No auto-completion path worked.`, 'warn');
-                return Tasks.failTask(q, t, bypass.reason ?? 'no auto-completion path worked');
+                Logger.log(`[Task] Skipping "${t.name}". No auto-completion path worked.`, "warn");
+                return Tasks.failTask(q, t, bypass.reason ?? "no auto-completion path worked");
             },
 
             async ACTIVITY(q, t) {
                 const key = buildStreamKey();
                 if (!key) {
-                    return Tasks.failTask(q, t, 'No voice channel found');
+                    return Tasks.failTask(q, t, "No voice channel found");
                 }
 
-                const beat = { stream_key: key, application_id: String(t.appId || ''), terminal: false };
+                const beat = { stream_key: key, application_id: String(t.appId || ""), terminal: false };
                 let cur = 0;
                 let failCount = 0;
                 let stalledBeats = 0;
@@ -1907,30 +1912,30 @@ export function launchQualquester() {
                     try {
                         const r = await Traffic.enqueue(`/quests/${q.id}/heartbeat`, beat);
                         const reported = r?.body?.progress?.[t.keyName]?.value ?? r?.body?.progress?.PLAY_ACTIVITY?.value;
-                        if (typeof reported === 'number') { cur = reported; stalledBeats = 0; }
-                        else if (++stalledBeats >= SYS.MAX_TASK_FAILURES) return Tasks.failTask(q, t, 'Discord credited no progress');
+                        if (typeof reported === "number") { cur = reported; stalledBeats = 0; }
+                        else if (++stalledBeats >= SYS.MAX_TASK_FAILURES) return Tasks.failTask(q, t, "Discord credited no progress");
                         Logger.updateTask(q.id, { name: t.name, type: "ACTIVITY", cur, max: t.target, status: "RUNNING" });
                         failCount = 0;
                         if (cur >= t.target) {
                             try { await Traffic.enqueue(`/quests/${q.id}/heartbeat`, { ...beat, terminal: true }); }
-                            catch (e) { Logger.log(`[ACTIVITY] Final heartbeat failed: ${e?.message}`, 'debug'); }
+                            catch (e) { Logger.log(`[ACTIVITY] Final heartbeat failed: ${e?.message}`, "debug"); }
                             break;
                         }
                     } catch (e) {
                         failCount++;
                         const err = ErrorHandler.classify(e);
                         if (err.isClientError) {
-                            Logger.log(`[Task] Activity quest unavailable (HTTP ${err.status}). Skipping.`, 'warn');
+                            Logger.log(`[Task] Activity quest unavailable (HTTP ${err.status}). Skipping.`, "warn");
                             return Tasks.failTask(q, t, `Client Error ${err.status}`);
                         }
                         if (failCount >= SYS.MAX_TASK_FAILURES) {
-                            return Tasks.failTask(q, t, 'Too many network failures');
+                            return Tasks.failTask(q, t, "Too many network failures");
                         }
-                        Logger.log(`[Task] ACTIVITY heartbeat failed (${failCount}/${SYS.MAX_TASK_FAILURES}): ${err.message}`, 'debug');
+                        Logger.log(`[Task] ACTIVITY heartbeat failed (${failCount}/${SYS.MAX_TASK_FAILURES}): ${err.message}`, "debug");
                     }
 
                     if (Date.now() - startTime > SYS.MAX_TIME) {
-                        return Tasks.failTask(q, t, 'Timeout exceeded');
+                        return Tasks.failTask(q, t, "Timeout exceeded");
                     }
                     await sleep(rnd(19000, 22000));
                 }
@@ -1939,18 +1944,18 @@ export function launchQualquester() {
 
             async finish(q, t) {
                 Logger.updateTask(q.id, { name: t.name, type: t.type, cur: t.target, max: t.target, status: "COMPLETED" });
-                recordOutcome(Tasks.outcomes, q.id, 'completed');
-                Logger.log(`[Task] Completed "${t.name}"!`, 'success');
-                Sound.play('tick');
+                recordOutcome(Tasks.outcomes, q.id, "completed");
+                Logger.log(`[Task] Completed "${t.name}"!`, "success");
+                Sound.play("tick");
 
                 try {
-                    if (typeof Notification !== 'undefined') {
-                        if (Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (_) { } }
-                        if (Notification.permission === 'granted') {
+                    if (typeof Notification !== "undefined") {
+                        if (Notification.permission === "default") { try { await Notification.requestPermission(); } catch (_) { } }
+                        if (Notification.permission === "granted") {
                             new Notification("QualQuester: Quest Completed", { body: t.name, icon: "https://cdn.discordapp.com/emojis/1120042457007792168.webp", tag: `qualquester-${q.id}` });
                         }
                     }
-                } catch (e) { Logger.log(`[Notification] ${e.message}`, 'debug'); }
+                } catch (e) { Logger.log(`[Notification] ${e.message}`, "debug"); }
 
                 if (RUNTIME.autoClaim) {
                     try {
@@ -1959,7 +1964,7 @@ export function launchQualquester() {
                         const claimRes = await this.claimReward(q.id);
 
                         if (claimRes?.body?.claimed_at) {
-                            Logger.log(`[Claim] Reward for "${t.name}" claimed automatically!`, 'success');
+                            Logger.log(`[Claim] Reward for "${t.name}" claimed automatically!`, "success");
                             Logger.updateTask(q.id, { name: t.name, type: t.type, cur: t.target, max: t.target, status: "CLAIMED" });
                             setTimeout(() => Logger.removeTask(q.id), 2000);
                             return;
@@ -1967,9 +1972,9 @@ export function launchQualquester() {
                     } catch (e) {
                         const needsCaptcha = e?.body?.captcha_key || e?.body?.captcha_sitekey;
                         if (needsCaptcha) {
-                            Logger.log(`[Claim] Captcha required for "${t.name}". Use UI button.`, 'warn');
+                            Logger.log(`[Claim] Captcha required for "${t.name}". Use UI button.`, "warn");
                         } else {
-                            Logger.log(`[Claim] Auto-claim failed for "${t.name}": ${e?.body?.message ?? e?.message}`, 'err');
+                            Logger.log(`[Claim] Auto-claim failed for "${t.name}": ${e?.body?.message ?? e?.message}`, "err");
                         }
                     }
                 }
@@ -1987,17 +1992,17 @@ export function launchQualquester() {
             for (const m of Object.values(moduleCache)) {
                 try {
                     const exp = m?.exports;
-                    if (!exp || typeof exp !== 'object') continue;
+                    if (!exp || typeof exp !== "object") continue;
 
                     for (const key of Object.keys(exp)) {
                         const p = exp[key];
                         if (!p) continue;
 
-                        if (!BoolValue && typeof p.create === 'function'
-                            && String(p.typeName ?? '').includes('Bool')) BoolValue = p;
+                        if (!BoolValue && typeof p.create === "function"
+                            && String(p.typeName ?? "").includes("Bool")) BoolValue = p;
 
-                        if (!actions && typeof p.updateAsync === 'function'
-                            && (p.ProtoClass?.typeName?.endsWith('.PreloadedUserSettings') || p.type === 1)) {
+                        if (!actions && typeof p.updateAsync === "function"
+                            && (p.ProtoClass?.typeName?.endsWith(".PreloadedUserSettings") || p.type === 1)) {
                             actions = p;
                             delay = exp.UserSettingsDelay?.INFREQUENT_USER_ACTION ?? 0;
                         }
@@ -2009,13 +2014,13 @@ export function launchQualquester() {
 
             return {
                 getSetting: () => actions.getCurrentValue?.()?.status?.showCurrentGame?.value,
-                updateSetting: value => actions.updateAsync('status', settings => {
-                    if (settings.showCurrentGame && typeof settings.showCurrentGame.value === 'boolean') {
+                updateSetting: value => actions.updateAsync("status", settings => {
+                    if (settings.showCurrentGame && typeof settings.showCurrentGame.value === "boolean") {
                         settings.showCurrentGame.value = value;
                     } else if (BoolValue) {
                         settings.showCurrentGame = BoolValue.create({ value });
                     } else {
-                        throw new Error('BoolValue proto type not found');
+                        throw new Error("BoolValue proto type not found");
                     }
                 }, delay)
             };
@@ -2023,16 +2028,16 @@ export function launchQualquester() {
 
         function loadModules() {
             try {
-                if (typeof window.Vencord !== 'undefined' && window.Vencord.Webpack) {
-                    Logger.log('[System] Vencord/Qualcord detected. Using Webpack API...', 'info');
+                if (typeof window.Vencord !== "undefined" && window.Vencord.Webpack) {
+                    Logger.log("[System] Vencord/Qualcord detected. Using Webpack API...", "info");
                     const W = window.Vencord.Webpack;
 
                     let routerModule;
                     try {
-                        const m = W.findByCode('transitionTo -');
+                        const m = W.findByCode("transitionTo -");
                         if (m) {
                             for (const prop of [m, m.default, ...Object.values(m)]) {
-                                if (typeof prop === 'function' && prop.toString().includes('transitionTo -')) {
+                                if (typeof prop === "function" && prop.toString().includes("transitionTo -")) {
                                     routerModule = { transitionTo: prop };
                                     break;
                                 }
@@ -2041,35 +2046,35 @@ export function launchQualquester() {
                     } catch (e) { }
 
                     Mods = {
-                        QuestStore: W.findStore('QuestStore') || W.findStore('QuestsStore'),
-                        RunStore: W.findStore('RunningGameStore'),
-                        StreamStore: W.findStore('ApplicationStreamingStore'),
-                        ChanStore: W.findStore('ChannelStore'),
-                        GuildChanStore: W.findStore('GuildChannelStore'),
-                        UserStore: W.findStore('UserStore'),
-                        OrbStore: W.findStore('VirtualCurrencyStore'),
-                        Premium: W.findByProps('canUseMoreQuestOrbs', 'canUseShopDiscounts'),
-                        Dispatcher: W.Common?.FluxDispatcher || W.findByProps('dispatch', 'subscribe', 'flushWaitQueue'),
-                        API: W.Common?.RestAPI || W.findByProps('get', 'post', 'del'),
+                        QuestStore: W.findStore("QuestStore") || W.findStore("QuestsStore"),
+                        RunStore: W.findStore("RunningGameStore"),
+                        StreamStore: W.findStore("ApplicationStreamingStore"),
+                        ChanStore: W.findStore("ChannelStore"),
+                        GuildChanStore: W.findStore("GuildChannelStore"),
+                        UserStore: W.findStore("UserStore"),
+                        OrbStore: W.findStore("VirtualCurrencyStore"),
+                        Premium: W.findByProps("canUseMoreQuestOrbs", "canUseShopDiscounts"),
+                        Dispatcher: W.Common?.FluxDispatcher || W.findByProps("dispatch", "subscribe", "flushWaitQueue"),
+                        API: W.Common?.RestAPI || W.findByProps("get", "post", "del"),
                         Router: routerModule,
                         ShowCurrentGame: findShowCurrentGameSetting(W.cache || W.wreq?.c)
                     };
 
-                    const required = ['QuestStore', 'API', 'Dispatcher', 'RunStore'];
+                    const required = ["QuestStore", "API", "Dispatcher", "RunStore"];
                     const missing = required.filter(k => !Mods[k]);
 
                     if (missing.length === 0) {
-                        const optional = ['StreamStore', 'ChanStore', 'GuildChanStore', 'Router'];
-                        optional.forEach(k => { if (!Mods[k]) Logger.log(`[System] Optional module '${k}' not found.`, 'warn'); });
+                        const optional = ["StreamStore", "ChanStore", "GuildChanStore", "Router"];
+                        optional.forEach(k => { if (!Mods[k]) Logger.log(`[System] Optional module '${k}' not found.`, "warn"); });
 
                         Patcher.init(Mods.RunStore);
                         return true;
                     }
                 }
 
-                if (typeof webpackChunkdiscord_app !== 'undefined') {
+                if (typeof webpackChunkdiscord_app !== "undefined") {
                     let req;
-                    webpackChunkdiscord_app.push([[Symbol()], {}, (r) => {
+                    webpackChunkdiscord_app.push([[Symbol()], {}, r => {
                         const cur = Object.keys(req?.c || {}).length;
                         const incoming = Object.keys(r?.c || {}).length;
                         if (incoming > cur) req = r;
@@ -2083,10 +2088,10 @@ export function launchQualquester() {
                             for (const m of modules) {
                                 try {
                                     const exp = m?.exports;
-                                    if (!exp || typeof exp !== 'object') continue;
+                                    if (!exp || typeof exp !== "object") continue;
                                     for (const key of Object.keys(exp)) {
                                         const prop = exp[key];
-                                        if (prop && typeof prop === 'object'
+                                        if (prop && typeof prop === "object"
                                             && prop.__proto__?.constructor?.displayName === storeName) {
                                             return prop;
                                         }
@@ -2100,12 +2105,12 @@ export function launchQualquester() {
                             for (const m of modules) {
                                 try {
                                     const exp = m?.exports;
-                                    if (!exp || typeof exp !== 'object') continue;
+                                    if (!exp || typeof exp !== "object") continue;
                                     for (const key of Object.keys(exp)) {
                                         const prop = exp[key];
                                         if (prop && prop._subscriptions
-                                            && typeof prop.subscribe === 'function'
-                                            && typeof prop.dispatch === 'function') {
+                                            && typeof prop.subscribe === "function"
+                                            && typeof prop.dispatch === "function") {
                                             return prop;
                                         }
                                     }
@@ -2118,12 +2123,12 @@ export function launchQualquester() {
                             for (const m of modules) {
                                 try {
                                     const exp = m?.exports;
-                                    if (!exp || typeof exp !== 'object') continue;
+                                    if (!exp || typeof exp !== "object") continue;
                                     for (const key of Object.keys(exp)) {
                                         const prop = exp[key];
-                                        if (prop && typeof prop.get === 'function'
-                                            && typeof prop.post === 'function'
-                                            && typeof prop.del === 'function') {
+                                        if (prop && typeof prop.get === "function"
+                                            && typeof prop.post === "function"
+                                            && typeof prop.del === "function") {
                                             return prop;
                                         }
                                     }
@@ -2133,13 +2138,13 @@ export function launchQualquester() {
                         }
 
                         Mods = {
-                            QuestStore: findStore('QuestStore'),
-                            RunStore: findStore('RunningGameStore'),
-                            StreamStore: findStore('ApplicationStreamingStore'),
-                            ChanStore: findStore('ChannelStore'),
-                            GuildChanStore: findStore('GuildChannelStore'),
-                            UserStore: findStore('UserStore'),
-                            OrbStore: findStore('VirtualCurrencyStore'),
+                            QuestStore: findStore("QuestStore"),
+                            RunStore: findStore("RunningGameStore"),
+                            StreamStore: findStore("ApplicationStreamingStore"),
+                            ChanStore: findStore("ChannelStore"),
+                            GuildChanStore: findStore("GuildChannelStore"),
+                            UserStore: findStore("UserStore"),
+                            OrbStore: findStore("VirtualCurrencyStore"),
                             Dispatcher: findDispatcher(),
                             API: findAPI(),
                             ShowCurrentGame: findShowCurrentGameSetting(req.c)
@@ -2152,7 +2157,7 @@ export function launchQualquester() {
 
                 throw new Error("Discord Webpack modules could not be extracted.");
             } catch (e) {
-                Logger.log(`[System] Module loading error: ${e.message ?? e}`, 'err');
+                Logger.log(`[System] Module loading error: ${e.message ?? e}`, "err");
                 console.error(e);
                 return false;
             }
@@ -2181,7 +2186,7 @@ export function launchQualquester() {
 
         async function main() {
             Logger.init();
-            if (!loadModules()) return Logger.log('[System] Failed to load Discord modules. Aborting.', 'err');
+            if (!loadModules()) return Logger.log("[System] Failed to load Discord modules. Aborting.", "err");
 
             const getQuests = () => {
                 const q = Mods.QuestStore?.quests;
@@ -2189,7 +2194,7 @@ export function launchQualquester() {
             };
 
             if (!getQuests().length) {
-                Logger.log('[System] Waiting for Discord to send its quest list...', 'info');
+                Logger.log("[System] Waiting for Discord to send its quest list...", "info");
                 for (let waited = 0; waited < 15000 && !getQuests().length && RUNTIME.running; waited += 250) {
                     await new Promise(r => setTimeout(r, 250));
                 }
@@ -2206,9 +2211,9 @@ export function launchQualquester() {
 
             if (!quests.length) {
                 if (!allQuests.length) {
-                    Logger.log('[System] Discord has not given this client a quest list. Reload Discord (Ctrl+R).', 'err');
+                    Logger.log("[System] Discord has not given this client a quest list. Reload Discord (Ctrl+R).", "err");
                 } else {
-                    Logger.log('[System] All available quests are completed!', 'success');
+                    Logger.log("[System] All available quests are completed!", "success");
                 }
                 return Logger.shutdown();
             }
@@ -2222,7 +2227,7 @@ export function launchQualquester() {
             RUNTIME.randomDelay = pickerResult.randomDelay;
 
             if (pickerResult.selectedQuests.size === 0) {
-                Logger.log('[System] No quests selected. Shutting down.', 'info');
+                Logger.log("[System] No quests selected. Shutting down.", "info");
                 return Logger.shutdown();
             }
 
@@ -2230,18 +2235,18 @@ export function launchQualquester() {
 
             while (RUNTIME.running) {
                 try {
-                    Logger.log(`[Cycle] Starting loop #${loopCount}...`, 'info');
+                    Logger.log(`[Cycle] Starting loop #${loopCount}...`, "info");
 
                     const suspendedUntil = questAccessSuspendedUntil();
                     if (suspendedUntil) {
-                        const when = suspendedUntil.getTime() === 0 ? 'for now' : `until ${suspendedUntil.toLocaleString()}`;
-                        Logger.log(`[System] Discord has suspended quest access on this account ${when}. Stopping QualQuester.`, 'err');
+                        const when = suspendedUntil.getTime() === 0 ? "for now" : `until ${suspendedUntil.toLocaleString()}`;
+                        Logger.log(`[System] Discord has suspended quest access on this account ${when}. Stopping QualQuester.`, "err");
                         break;
                     }
 
                     const blockedUntil = enrollmentBlockedUntil();
                     if (blockedUntil) {
-                        Logger.log(`[System] Discord has blocked quest enrollment on this account until ${blockedUntil.toLocaleString()}. Stopping.`, 'err');
+                        Logger.log(`[System] Discord has blocked quest enrollment on this account until ${blockedUntil.toLocaleString()}. Stopping.`, "err");
                         break;
                     }
 
@@ -2257,8 +2262,8 @@ export function launchQualquester() {
 
                     if (!active.length) {
                         const summary = summarizeRun(Tasks.outcomes);
-                        Logger.log(`[System] ${summary.line}`, summary.blocked || summary.failed ? 'warn' : 'success');
-                        if (summary.playDone) Sound.play('done');
+                        Logger.log(`[System] ${summary.line}`, summary.blocked || summary.failed ? "warn" : "success");
+                        if (summary.playDone) Sound.play("done");
                         break;
                     }
 
@@ -2269,7 +2274,7 @@ export function launchQualquester() {
                         try {
                             const cfg = selectTaskConfig(q.config);
                             const questName = q.config?.messages?.questName ?? q.id;
-                            const hasTaskConfig = !!cfg?.tasks && typeof cfg.tasks === 'object';
+                            const hasTaskConfig = !!cfg?.tasks && typeof cfg.tasks === "object";
                             const typeData = hasTaskConfig ? Tasks.detectType(cfg, q.config?.application?.id) : null;
                             const blocker = questBlocker({
                                 name: questName,
@@ -2279,9 +2284,9 @@ export function launchQualquester() {
                                 isDesktop: SYS.IS_DESKTOP
                             });
                             if (blocker) {
-                                Logger.log(`[Quest] ${blocker} Skipping it for the rest of this run.`, 'warn');
+                                Logger.log(`[Quest] ${blocker} Skipping it for the rest of this run.`, "warn");
                                 Tasks.skipped.add(q.id);
-                                recordOutcome(Tasks.outcomes, q.id, 'blocked');
+                                recordOutcome(Tasks.outcomes, q.id, "blocked");
                                 return;
                             }
 
@@ -2299,7 +2304,7 @@ export function launchQualquester() {
                             if (!q.userStatus?.enrolledAt && !RUNTIME.autoEnroll) {
                                 Logger.updateTask(tInfo.id, {
                                     name: tInfo.name, type: tInfo.type, cur: 0, max: tInfo.target,
-                                    status: "PENDING", actionRequired: 'ENROLL'
+                                    status: "PENDING", actionRequired: "ENROLL"
                                 });
                                 return;
                             }
@@ -2313,7 +2318,7 @@ export function launchQualquester() {
 
                             const taskFunc = async () => {
                                 if (!q.userStatus?.enrolledAt) {
-                                    Logger.log(`[Enroll] Accepting quest: ${tInfo.name}`, 'info');
+                                    Logger.log(`[Enroll] Accepting quest: ${tInfo.name}`, "info");
                                     try {
                                         await Traffic.enqueue(`/quests/${q.id}/enroll`, {
                                             location: 11,
@@ -2326,11 +2331,11 @@ export function launchQualquester() {
                                         const err = ErrorHandler.classify(e);
                                         if (ErrorHandler.isSkippableQuest(e)) {
                                             Tasks.skipped.add(q.id);
-                                            Logger.log(`[Enroll] ${tInfo.name} unavailable (${err.status}). Skipping.`, 'warn');
+                                            Logger.log(`[Enroll] ${tInfo.name} unavailable (${err.status}). Skipping.`, "warn");
                                         } else {
-                                            Logger.log(`[Enroll] Failed for ${tInfo.name}: ${err.message}`, 'err');
+                                            Logger.log(`[Enroll] Failed for ${tInfo.name}: ${err.message}`, "err");
                                         }
-                                        return Tasks.failTask(q, tInfo, `Enrollment failed`);
+                                        return Tasks.failTask(q, tInfo, "Enrollment failed");
                                     }
                                 }
 
@@ -2344,14 +2349,14 @@ export function launchQualquester() {
                             else queues.game.push(taskFunc);
                             scheduledInfo.push({ appId: tInfo.appId, name: tInfo.name, type });
                         } catch (e) {
-                            Logger.log(`[Quest] Error processing ${q.id}: ${e.message}`, 'err');
+                            Logger.log(`[Quest] Error processing ${q.id}: ${e.message}`, "err");
                         }
                     });
 
                     const totalTasks = queues.video.length + queues.game.length;
 
                     if (totalTasks > 0) {
-                        Logger.log(`[Cycle] Processing: ${queues.video.length} videos, ${queues.game.length} games.`, 'info');
+                        Logger.log(`[Cycle] Processing: ${queues.video.length} videos, ${queues.game.length} games.`, "info");
                         const sharedGames = new Map();
                         for (const s of scheduledInfo) {
                             if (s.type !== "GAME") continue;
@@ -2362,13 +2367,13 @@ export function launchQualquester() {
                         }
                         for (const { name, count } of sharedGames.values()) {
                             if (count < 2) continue;
-                            Logger.log(`[Cycle] ${count} "${name}" quests are the same game, so Discord credits all ${count} together.`, 'info');
+                            Logger.log(`[Cycle] ${count} "${name}" quests are the same game, so Discord credits all ${count} together.`, "info");
                         }
                         const pGames = runConcurrent(queues.game, 1);
                         const pVideos = runConcurrent(queues.video, 2);
                         await Promise.all([pGames, pVideos]);
                     } else {
-                        if (active.length === 0) { Logger.log('[System] All available quests are completed!', 'success'); break; }
+                        if (active.length === 0) { Logger.log("[System] All available quests are completed!", "success"); break; }
                         else await sleep(rnd(4000, 6000));
                     }
 
@@ -2376,16 +2381,16 @@ export function launchQualquester() {
 
                     if (RUNTIME.randomDelay) {
                         const delayMs = rnd(60000, 1800000);
-                        Logger.log(`[Cycle] Loop #${loopCount} complete. Random delay: ${Math.round(delayMs / 60000)}m before rescan.`, 'info');
+                        Logger.log(`[Cycle] Loop #${loopCount} complete. Random delay: ${Math.round(delayMs / 60000)}m before rescan.`, "info");
                         await sleep(delayMs);
                     } else {
-                        Logger.log(`[Cycle] Loop #${loopCount} complete. Waiting before rescan...`, 'info');
+                        Logger.log(`[Cycle] Loop #${loopCount} complete. Waiting before rescan...`, "info");
                         await sleep(rnd(2500, 4500));
                     }
                     loopCount++;
 
                 } catch (cycleError) {
-                    Logger.log(`[Cycle] Error in loop #${loopCount}: ${cycleError?.message ?? cycleError}`, 'err');
+                    Logger.log(`[Cycle] Error in loop #${loopCount}: ${cycleError?.message ?? cycleError}`, "err");
                     console.error(cycleError);
                     await sleep(3000);
                     loopCount++;
@@ -2394,7 +2399,7 @@ export function launchQualquester() {
 
             const hasUnclaimed = [...Logger.tasks.values()].some(t => t.claimable && !t.removing);
             if (hasUnclaimed) {
-                Logger.log('[System] Quest cycle finished. Claim your rewards above, then click STOP.', 'info');
+                Logger.log("[System] Quest cycle finished. Claim your rewards above, then click STOP.", "info");
                 return;
             }
 
@@ -2403,8 +2408,8 @@ export function launchQualquester() {
 
         main().catch(e => {
             const msg = e?.message ?? e?.toString?.() ?? "Unknown fatal error";
-            console.error('[QualQuester Fatal]', e);
-            try { Logger.log(`[System] FATAL: ${msg}`, 'err'); } catch (_) { }
+            console.error("[QualQuester Fatal]", e);
+            try { Logger.log(`[System] FATAL: ${msg}`, "err"); } catch (_) { }
             Logger.shutdown();
             setTimeout(() => { window.qualquesterLock = false; window.orionLock = false; }, 1500);
         });

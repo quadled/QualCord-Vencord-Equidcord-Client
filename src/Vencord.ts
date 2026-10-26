@@ -23,8 +23,8 @@ import "./fixWeirdAppRegionBug.css";
 import nativeTitleBarStyles from "./nativeTitleBar.css?managed";
 
 export * as Api from "./api";
-export * as Plugins from "./api/PluginManager";
 export * as LivePlugins from "./api/LivePlugins";
+export * as Plugins from "./api/PluginManager";
 export * as Components from "./components";
 export * as Util from "./utils";
 export * as Updater from "./utils/updater";
@@ -39,14 +39,14 @@ import { StartAt } from "@utils/types";
 import { SettingsRouter } from "@webpack/common";
 
 import { get as dsGet } from "./api/DataStore";
+import { initLivePlugins } from "./api/LivePlugins";
 import { showNotice } from "./api/Notices";
 import { NotificationData, showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
 import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
-import { initLivePlugins } from "./api/LivePlugins";
-import { initQualcordCommunity } from "./qualcordCommunity";
 import { checkAndShowQualcordUpdateModal } from "./components/settings/QualcordUpdateModal";
+import { initQualcordCommunity } from "./qualcordCommunity";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";

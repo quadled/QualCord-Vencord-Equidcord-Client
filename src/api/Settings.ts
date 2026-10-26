@@ -23,6 +23,7 @@ import { DefinedSettings, OptionType, SettingsChecks, SettingsDefinition } from 
 import { React, useEffect } from "@webpack/common";
 
 import plugins from "~plugins";
+
 import { isSystemDefaultPlugin, isSystemRequiredPlugin } from "../qualcordDefaults";
 
 const logger = new Logger("Settings");

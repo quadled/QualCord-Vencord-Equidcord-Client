@@ -27,7 +27,7 @@ import { Divider } from "@components/Divider";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingTertiary } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
-import { SettingsTab } from "@components/settings";
+import { openLivePluginStudio, SettingsTab } from "@components/settings";
 import { debounce } from "@shared/debounce";
 import { ChangeList } from "@utils/ChangeList";
 import { classNameFactory } from "@utils/css";
@@ -43,13 +43,12 @@ import { Alerts, lodash, Parser, React, SearchableSelect, Select, showToast, Tex
 import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
-import { isSystemRequiredPlugin } from "../../../../qualcordDefaults";
 
+import { isSystemRequiredPlugin } from "../../../../qualcordDefaults";
 import { PluginCard } from "./PluginCard";
 import { openWarningModal } from "./PluginModal";
 import { StockPluginsCard, UserPluginsCard } from "./PluginStatCards";
 import { UIElementsButton } from "./UIElements";
-import { openLivePluginStudio } from "@components/settings";
 
 export const cl = classNameFactory("vc-plugins-");
 export const logger = new Logger("PluginSettings", "#a6d189");

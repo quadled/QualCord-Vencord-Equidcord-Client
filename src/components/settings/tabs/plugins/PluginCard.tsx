@@ -15,8 +15,8 @@ import { Plugin } from "@utils/types";
 import { React, showToast } from "@webpack/common";
 
 import { PluginMeta } from "~plugins";
-import { QUALCORD_LOGO } from "../../../../qualcordLogo";
 
+import { QUALCORD_LOGO } from "../../../../qualcordLogo";
 import { openPluginModal } from "./PluginModal";
 
 const logger = new Logger("PluginCard");
@@ -134,7 +134,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
                 onClick={e => {
                     e.stopPropagation();
                     navigator.clipboard.writeText(plugin.name);
-                    showToast("Plugin-ID kopiert: " + plugin.name);
+                    showToast({ text: "Plugin-ID kopiert: " + plugin.name, variant: "default" });
                 }}
             >
                 ID: <strong style={{ color: "var(--header-primary)" }}>{plugin.name}</strong>

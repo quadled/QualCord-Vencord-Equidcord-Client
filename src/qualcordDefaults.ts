@@ -1,6 +1,7 @@
 /*
- * Qualcord - Zentrale Plugin-ID-Verwaltung für System-Standards
- * Speicherort: src/qualcordDefaults.ts
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**

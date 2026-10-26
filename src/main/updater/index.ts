@@ -1,12 +1,13 @@
 /*
- * Qualcord Updater Service
- * Auto-detects Git repository or seamlessly falls back to GitHub HTTP updater.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { existsSync } from "fs";
-import { join } from "path";
 import { IpcEvents } from "@shared/IpcEvents";
 import { ipcMain } from "electron";
+import { existsSync } from "fs";
+import { join } from "path";
 
 import gitRemote from "~git-remote";
 

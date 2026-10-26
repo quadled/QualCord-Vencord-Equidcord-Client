@@ -1,6 +1,7 @@
-/*!
- * Qualcord, a custom client modification for Discord
- * Powered by Qualcord Community
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 export * from "./Vencord";

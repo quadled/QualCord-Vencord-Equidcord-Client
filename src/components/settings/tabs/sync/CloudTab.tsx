@@ -35,6 +35,7 @@ import { Margins } from "@utils/margins";
 import { useForceUpdater } from "@utils/react";
 import { findComponentByCodeLazy } from "@webpack";
 import { Alerts, SearchableSelect, Select, useState } from "@webpack/common";
+
 import { QUALCORD_LOGO } from "../../../../qualcordLogo";
 
 const ICON_STYLE: React.CSSProperties = { width: 20, height: 20, borderRadius: "50%", verticalAlign: "middle" };
