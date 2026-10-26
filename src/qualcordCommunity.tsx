@@ -27,8 +27,6 @@ import {
     useState,
     useStateFromStores } from "@webpack/common";
 
-import { QUALCORD_LOGO } from "./qualcordLogo";
-
 export const QUALCORD_GUILD_ID = "1442497818764771512";
 export const QUALCORD_INVITE_CODE = "Pk3dVqS5Hn";
 export const QUALCORD_INVITE_URL = `https://discord.gg/${QUALCORD_INVITE_CODE}`;
@@ -152,6 +150,29 @@ function hideFromRegularDraggableList() {
             };
         }).filter(folder => folder.folderId !== undefined || (folder.guildIds && folder.guildIds.length > 0));
     };
+}
+
+/**
+ * Clean native SVG vector icon for Qualcord
+ */
+export function QualcordLogoIcon({ width = 28, height = 28, style }: { width?: number; height?: number; style?: React.CSSProperties; }) {
+    return (
+        <svg
+            width={width}
+            height={height}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ display: "block", flexShrink: 0, ...style }}
+        >
+            <circle cx="12" cy="12" r="8.75" stroke="currentColor" strokeWidth="2" />
+            <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+            <line x1="12" y1="3.25" x2="12" y2="7.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="16.2" x2="12" y2="20.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="3.25" y1="12" x2="7.8" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="16.2" y1="12" x2="20.75" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    );
 }
 
 /**
@@ -303,43 +324,25 @@ function QualcordServerNavButton() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            borderRadius: isSelected || hovered ? "16px" : "50%",
-                            background: isSelected
-                                ? "linear-gradient(135deg, #2b2548 0%, #1a1b2d 100%)"
-                                : hovered
-                                ? "linear-gradient(135deg, #28243e 0%, #181926 100%)"
-                                : "var(--background-primary, #313338)",
-                            border: isSelected
-                                ? "1.5px solid #5865F2"
-                                : hovered
-                                ? "1.5px solid rgba(138, 43, 226, 0.8)"
-                                : "1px solid rgba(255, 255, 255, 0.08)",
-                            boxShadow: isSelected
-                                ? "0 0 16px rgba(88, 101, 242, 0.6), inset 0 0 8px rgba(138, 43, 226, 0.4)"
-                                : hovered
-                                ? "0 0 14px rgba(138, 43, 226, 0.5)"
-                                : "0 2px 6px rgba(0, 0, 0, 0.3)",
+                            borderRadius: "16px",
+                            background: isSelected || hovered
+                                ? "var(--brand-experiment, #5865F2)"
+                                : "var(--background-primary, rgba(255, 255, 255, 0.05))",
+                            color: isSelected || hovered
+                                ? "#FFFFFF"
+                                : "var(--interactive-normal, #dbdee1)",
                             cursor: "pointer",
-                            transition: "border-radius 0.18s ease-out, background 0.18s ease-out, box-shadow 0.18s ease-out, border 0.18s ease-out, transform 0.1s ease-out",
+                            transition: "background-color 0.15s ease-out, color 0.15s ease-out, border-radius 0.15s ease-out",
                             position: "relative",
                             overflow: "hidden"
                         }}
                     >
-                        <img
-                            src={QUALCORD_LOGO}
-                            alt="Qualcord"
-                            width={38}
-                            height={38}
+                        <QualcordLogoIcon
+                            width={28}
+                            height={28}
                             style={{
-                                borderRadius: "50%",
-                                pointerEvents: "none",
-                                transform: hovered ? "scale(1.08)" : "scale(1)",
-                                filter: isSelected
-                                    ? "drop-shadow(0 0 6px rgba(88, 101, 242, 0.8))"
-                                    : hovered
-                                    ? "drop-shadow(0 0 6px rgba(138, 43, 226, 0.8))"
-                                    : "none",
-                                transition: "transform 0.18s ease-out, filter 0.18s ease-out"
+                                transform: hovered ? "scale(1.06)" : "scale(1)",
+                                transition: "transform 0.15s ease-out"
                             }}
                         />
 
