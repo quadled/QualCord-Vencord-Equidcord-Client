@@ -173,7 +173,18 @@ function QualcordServerNavButton() {
         () => Boolean(GuildStore?.getGuild?.(QUALCORD_GUILD_ID))
     );
 
-    // Watch unread state
+    // Watch unread state & mention count
+    const mentionCount = useStateFromStores(
+        [GuildReadStateStore],
+        () => {
+            try {
+                return GuildReadStateStore?.getMentionCount?.(QUALCORD_GUILD_ID) ?? 0;
+            } catch {
+                return 0;
+            }
+        }
+    );
+
     const hasUnread = useStateFromStores(
         [GuildReadStateStore],
         () => {
@@ -234,8 +245,8 @@ function QualcordServerNavButton() {
     };
 
     // Pill height calculation: selected = 40px, hovered = 20px, unread = 8px, default = 0px
-    const pillHeight = isSelected ? 40 : hovered ? 20 : hasUnread ? 8 : 0;
-    const pillTop = isSelected ? 4 : hovered ? 14 : hasUnread ? 20 : 24;
+    const pillHeight = isSelected ? 40 : hovered ? 20 : (hasUnread || mentionCount > 0) ? 8 : 0;
+    const pillTop = isSelected ? 4 : hovered ? 14 : (hasUnread || mentionCount > 0) ? 20 : 24;
 
     return (
         <div
@@ -293,17 +304,22 @@ function QualcordServerNavButton() {
                             justifyContent: "center",
                             borderRadius: isSelected || hovered ? "16px" : "50%",
                             background: isSelected
-                                ? "#5865F2"
+                                ? "linear-gradient(135deg, #2b2548 0%, #1a1b2d 100%)"
                                 : hovered
-                                ? "linear-gradient(135deg, #5865F2, #8A2BE2)"
-                                : "rgba(35, 37, 43, 0.95)",
+                                ? "linear-gradient(135deg, #28243e 0%, #181926 100%)"
+                                : "var(--background-primary, #313338)",
+                            border: isSelected
+                                ? "1.5px solid #5865F2"
+                                : hovered
+                                ? "1.5px solid rgba(138, 43, 226, 0.8)"
+                                : "1px solid rgba(255, 255, 255, 0.08)",
                             boxShadow: isSelected
-                                ? "0 0 16px rgba(88, 101, 242, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.4)"
+                                ? "0 0 16px rgba(88, 101, 242, 0.6), inset 0 0 8px rgba(138, 43, 226, 0.4)"
                                 : hovered
-                                ? "0 0 14px rgba(138, 43, 226, 0.7)"
+                                ? "0 0 14px rgba(138, 43, 226, 0.5)"
                                 : "0 2px 6px rgba(0, 0, 0, 0.3)",
                             cursor: "pointer",
-                            transition: "border-radius 0.18s ease-out, background 0.18s ease-out, box-shadow 0.18s ease-out, transform 0.1s ease-out",
+                            transition: "border-radius 0.18s ease-out, background 0.18s ease-out, box-shadow 0.18s ease-out, border 0.18s ease-out, transform 0.1s ease-out",
                             position: "relative",
                             overflow: "hidden"
                         }}
@@ -311,30 +327,46 @@ function QualcordServerNavButton() {
                         <img
                             src={QUALCORD_LOGO}
                             alt="Qualcord"
-                            width={32}
-                            height={32}
+                            width={38}
+                            height={38}
                             style={{
                                 borderRadius: "50%",
                                 pointerEvents: "none",
                                 transform: hovered ? "scale(1.08)" : "scale(1)",
-                                transition: "transform 0.18s ease-out"
+                                filter: isSelected
+                                    ? "drop-shadow(0 0 6px rgba(88, 101, 242, 0.8))"
+                                    : hovered
+                                    ? "drop-shadow(0 0 6px rgba(138, 43, 226, 0.8))"
+                                    : "none",
+                                transition: "transform 0.18s ease-out, filter 0.18s ease-out"
                             }}
                         />
 
-                        {/* Unread badge if there are unreads */}
-                        {hasUnread && !isSelected && (
+                        {/* Mention badge if there are mentions */}
+                        {mentionCount > 0 && !isSelected && (
                             <div
                                 style={{
                                     position: "absolute",
-                                    bottom: "2px",
-                                    right: "2px",
-                                    width: "10px",
-                                    height: "10px",
-                                    borderRadius: "50%",
+                                    bottom: "-2px",
+                                    right: "-2px",
+                                    minWidth: "16px",
+                                    height: "16px",
+                                    padding: "0 4px",
+                                    borderRadius: "8px",
                                     background: "#ED4245",
-                                    border: "2px solid #1e1f22"
+                                    color: "#FFFFFF",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    border: "2px solid var(--background-floating, #1e1f22)",
+                                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.4)",
+                                    pointerEvents: "none"
                                 }}
-                            />
+                            >
+                                {mentionCount > 99 ? "99+" : mentionCount}
+                            </div>
                         )}
                     </div>
                 )}
