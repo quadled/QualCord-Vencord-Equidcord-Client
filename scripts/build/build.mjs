@@ -20,7 +20,7 @@
 // @ts-check
 
 import { createPackage } from "@electron/asar";
-import { readdir, writeFile } from "fs/promises";
+import { copyFile, readdir, writeFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -230,13 +230,15 @@ await buildOrWatchAll(buildConfigs);
 
 await Promise.all([
     writeFile("dist/desktop/package.json", JSON.stringify({
-        name: "equicord",
+        name: "qualcord",
         main: "patcher.js"
     })),
     writeFile("dist/equibop/package.json", JSON.stringify({
-        name: "equicord",
+        name: "qualcord",
         main: "main.js"
-    }))
+    })),
+    copyFile("version.json", "dist/desktop/version.json").catch(() => {}),
+    copyFile("version.json", "dist/equibop/version.json").catch(() => {})
 ]);
 
 await Promise.all([

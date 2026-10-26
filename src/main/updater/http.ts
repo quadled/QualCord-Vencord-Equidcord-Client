@@ -31,11 +31,17 @@ async function getRepo() {
 
 function getLocalVersion(): { version: string; build: number } {
     try {
-        const localVersionFile = join(__dirname, "../../version.json");
-        if (existsSync(localVersionFile)) {
-            const data = JSON.parse(readFileSync(localVersionFile, "utf-8"));
-            if (data?.version) {
-                return { version: data.version, build: Number(data.build) || 0 };
+        const candidates = [
+            join(__dirname, "version.json"),
+            join(__dirname, "../version.json"),
+            join(__dirname, "../../version.json")
+        ];
+        for (const localVersionFile of candidates) {
+            if (existsSync(localVersionFile)) {
+                const data = JSON.parse(readFileSync(localVersionFile, "utf-8"));
+                if (data?.version) {
+                    return { version: data.version, build: Number(data.build) || 0 };
+                }
             }
         }
     } catch {}

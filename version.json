@@ -1,8 +1,8 @@
 {
   "major": 1,
   "minor": 0,
-  "patch": 29,
-  "build": 30,
-  "version": "1.0.29",
-  "autoIncrement": true
+  "patch": 30,
+  "build": 31,
+  "version": "1.0.30",
+  "autoIncrement": false
 }
