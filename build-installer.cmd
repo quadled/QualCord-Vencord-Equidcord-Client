@@ -8,7 +8,7 @@ echo ====================================================
 echo.
 
 echo [1/3] Kompiliere Qualcord Client...
-call pnpm build
+call pnpm.cmd build
 if errorlevel 1 (
     echo [FEHLER] Qualcord Build fehlgeschlagen!
     exit /b %errorlevel%
@@ -24,12 +24,15 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Kompiliere QualcordInstaller.exe (C# Standalone)...
-"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:winexe /optimize+ /r:System.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /resource:installer\Qualcord-dist.zip,QualcordDistZip /out:installer\QualcordInstaller.exe installer\QualcordInstaller.cs
+echo [3/3] Kompiliere modernen QualcordInstaller.exe (WPF .NET)...
+if not exist "installer\QualcordSetup\Resources" mkdir "installer\QualcordSetup\Resources"
+copy /y installer\Qualcord-dist.zip installer\QualcordSetup\Resources\payload.zip >nul
+dotnet publish installer\QualcordSetup\CustomInstaller.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o installer\dist
 if errorlevel 1 (
     echo [FEHLER] C# Kompilierung von QualcordInstaller.exe fehlgeschlagen!
     exit /b %errorlevel%
 )
+copy /y installer\dist\QualcordSetup.exe installer\QualcordInstaller.exe >nul
 
 echo.
 echo ====================================================

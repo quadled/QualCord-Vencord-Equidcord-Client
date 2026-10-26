@@ -42,3 +42,11 @@ misc/bundle
 
 # intl scripts
 misc/scripts
+
+# .NET build outputs
+bin/
+obj/
+installer/dist/
+installer/QualcordSetup/Resources/payload.zip
+
+

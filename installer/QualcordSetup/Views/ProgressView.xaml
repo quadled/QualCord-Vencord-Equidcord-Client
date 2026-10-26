@@ -1,0 +1,86 @@
+<UserControl x:Class="CustomInstaller.Views.ProgressView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="420" d:DesignWidth="680">
+    <Grid Margin="36,24,36,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock x:Name="TxtTitle"
+                       Text="Installation wird durchgeführt..."
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif" />
+            <TextBlock x:Name="TxtSubtitle"
+                       Text="Bitte warten Sie einen Augenblick, während die Dateien kopiert werden."
+                       FontSize="13"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Margin="0,3,0,0" />
+        </StackPanel>
+
+        <!-- Progress Box & Status -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Top">
+            <Border Background="{StaticResource CardBgBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,18"
+                    Margin="0,0,0,16">
+                <Border.Effect>
+                    <StaticResource ResourceKey="CardShadow" />
+                </Border.Effect>
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <TextBlock x:Name="TxtStatus"
+                                   Text="Vorbereitung..."
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Left" />
+                        <TextBlock x:Name="TxtPercent"
+                                   Text="0 %"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <ProgressBar x:Name="ProgressBarMain"
+                                 Height="8"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Details Expander -->
+            <Expander Header="Details anzeigen"
+                      FontSize="12.5"
+                      Foreground="{StaticResource TextSecondaryBrush}"
+                      IsExpanded="False">
+                <Border Background="#0E1013"
+                        BorderBrush="{StaticResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Margin="0,6,0,0"
+                        Height="140">
+                    <ListBox x:Name="ListLog"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             FontSize="11.5"
+                             FontFamily="Consolas, Segoe UI, sans-serif"
+                             Foreground="{StaticResource TextSecondaryBrush}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                </Border>
+            </Expander>
+        </StackPanel>
+    </Grid>
+</UserControl>

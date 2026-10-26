@@ -1,0 +1,11 @@
+{
+    "AppName": "Qualcord",
+    "Publisher": "Qualcord Community",
+    "AppVersion": "1.0.30",
+    "ExecutableName": "Discord.exe",
+    "Description": "Moderne Discord-Erweiterung mit Quest-Automatisierung, personalisierten Themes, unbegrenzten Plugins und Live Plugin Studio.",
+    "AccentColorHex": "#5865F2",
+    "DefaultLaunchOnStartup": false,
+    "DefaultCreateDesktopShortcut": false,
+    "DefaultCreateStartMenuShortcut": false
+}

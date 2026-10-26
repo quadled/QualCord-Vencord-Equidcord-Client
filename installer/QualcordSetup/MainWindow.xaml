@@ -1,0 +1,102 @@
+<Window x:Class="CustomInstaller.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:CustomInstaller.Views"
+        xmlns:controls="clr-namespace:CustomInstaller.Controls"
+        mc:Ignorable="d"
+        Title="Qualcord Setup"
+        Height="490"
+        Width="700"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        AllowsTransparency="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0"
+                      GlassFrameThickness="0"
+                      CornerRadius="12" />
+    </WindowChrome.WindowChrome>
+
+    <!-- Outer Window Container with Dark Border & Deep Drop Shadow -->
+    <Grid Margin="12">
+        <Border Background="{StaticResource WindowBgBrush}"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+            <Border.Effect>
+                <StaticResource ResourceKey="ElevationShadow" />
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="38" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Sleek Dark Title Bar with Rounded Top Corners -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource TitleBarBgBrush}"
+                        CornerRadius="11,11,0,0"
+                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Title & ZenCord Logo -->
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="14,0,0,0">
+                            <controls:ZenCordLogo Width="20" Height="20" Margin="0,0,8,0" />
+                            <TextBlock x:Name="TxtWindowTitle"
+                                       Text="Qualcord Client Setup"
+                                       FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontWeight="SemiBold"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif" />
+                        </StackPanel>
+
+                        <!-- Window Control Buttons -->
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <Button x:Name="BtnMinimize"
+                                    Style="{StaticResource TitleBarButton}"
+                                    ToolTip="Minimieren"
+                                    Click="BtnMinimize_Click">
+                                <!-- Minimize Glyph -->
+                                <Line X1="0" Y1="0" X2="10" Y2="0"
+                                      Stroke="{StaticResource TextSecondaryBrush}"
+                                      StrokeThickness="1.2" />
+                            </Button>
+                            <Button x:Name="BtnClose"
+                                    Style="{StaticResource TitleBarCloseButton}"
+                                    ToolTip="Schließen"
+                                    Click="BtnClose_Click">
+                                <!-- Close Cross Glyph -->
+                                <Path Data="M 0,0 L 10,10 M 10,0 L 0,10"
+                                      Stroke="{StaticResource TextSecondaryBrush}"
+                                      StrokeThickness="1.2" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Main View Container -->
+                <Grid Grid.Row="1">
+                    <views:WelcomeView x:Name="ViewWelcome" />
+                    <views:OptionsView x:Name="ViewOptions" Visibility="Collapsed" />
+                    <views:ProgressView x:Name="ViewProgress" Visibility="Collapsed" />
+                    <views:CompletedView x:Name="ViewCompleted" Visibility="Collapsed" />
+                    <views:UninstallView x:Name="ViewUninstall" Visibility="Collapsed" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
