@@ -2,7 +2,8 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.21-8A2BE2?style=flat&logo=github)](https://github.com/quadled/QualCord-Vencord-Equidcord-Client)
 [![Discord](https://img.shields.io/discord/1442497818764771512?color=5865F2&label=Qualcord%20Discord&logo=discord&logoColor=white)](https://discord.gg/Pk3dVqS5Hn)
-[![Installer](https://img.shields.io/badge/1--Click%20Installer-Download%20.exe-5865F2?style=flat&logo=windows)](https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/QualcordInstaller.exe)
+[![Windows](https://img.shields.io/badge/Windows-Ready-blue?style=flat&logo=windows)](https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/QualcordInstaller.exe)
+[![Linux](https://img.shields.io/badge/Linux-Ready-FCC624?style=flat&logo=linux&logoColor=black)](https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.sh)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **Qualcord** ist ein hochmoderner, maßgeschneiderter Discord-Client mit über 300+ Plugins, einem revolutionären **In-App Live Plugin Studio**, exklusivem Glassmorphic-Design und vollständiger Anpassbarkeit.
@@ -36,7 +37,7 @@
 
 ---
 
-### 💻 Option 2: 1-Befehl PowerShell Installation (Ohne Download)
+### 💻 Option 2: Windows 1-Befehl PowerShell Installation (Ohne Download)
 Öffne PowerShell auf deinem PC und füge einfach diesen einen Befehl ein:
 ```powershell
 irm https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.ps1 | iex
@@ -45,7 +46,21 @@ Qualcord wird vollautomatisch heruntergeladen, eingerichtet und Discord wird neu
 
 ---
 
-### 🛠️ Option 3: Aus Quellcode kompilieren (Für Entwickler)
+### 🐧 Option 3: Linux 1-Befehl Terminal Installation (Empfohlen für Linux / Steam Deck)
+Öffne dein Terminal und führe diesen Befehl aus:
+```bash
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.sh)"
+```
+* Unterstützt native Pakete (.deb, .rpm, Arch Linux / Manjaro, openSUSE) und **Flatpak** (`com.discordapp.Discord`)!
+* Erkennt automatisch Stable, PTB, Canary und Development Builds.
+* Zur Deinstallation einfach denselben Befehl mit `--uninstall` aufrufen:
+  ```bash
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.sh)" -- --uninstall
+  ```
+
+---
+
+### 🛠️ Option 4: Aus Quellcode kompilieren (Für Entwickler)
 
 #### Voraussetzungen:
 * [Node.js (LTS Version)](https://nodejs.org/)

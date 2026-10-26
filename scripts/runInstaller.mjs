@@ -1,120 +1,249 @@
 /*
- * Vencord, a modification for Discord's desktop app
- * Copyright (c) 2023 Vendicated and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ * Qualcord, a custom client modification for Discord
+ * Copyright (c) 2026 Qualcord and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import "./checkNodeVersion.js";
 
-import { execFileSync, execSync } from "child_process";
-import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync, cpSync, rmSync } from "fs";
+import { execSync } from "child_process";
+import { existsSync, lstatSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
-import { Readable } from "stream";
-import { finished } from "stream/promises";
 import { fileURLToPath } from "url";
 
-const BASE_URL = "https://github.com/Equicord/Equilotl/releases/latest/download/";
-
 const BASE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
-const FILE_DIR = join(BASE_DIR, "dist", "Installer");
-const ETAG_FILE = join(FILE_DIR, "etag.txt");
+const DIST_DESKTOP = join(BASE_DIR, "dist", "desktop");
+const PATCHER_JS = join(DIST_DESKTOP, "patcher.js");
 
-function byArch(files) {
-    return files[process.arch] ?? files.default;
+function findDiscordInstallations() {
+    const targets = [];
+    const platform = process.platform;
+
+    if (platform === "win32") {
+        const localAppData = process.env.LOCALAPPDATA;
+        if (!localAppData) return targets;
+
+        const branches = [
+            { name: "Discord Stable", dir: "Discord" },
+            { name: "Discord PTB", dir: "DiscordPTB" },
+            { name: "Discord Canary", dir: "DiscordCanary" },
+            { name: "Discord Development", dir: "DiscordDevelopment" }
+        ];
+
+        for (const branch of branches) {
+            const branchPath = join(localAppData, branch.dir);
+            if (!existsSync(branchPath)) continue;
+
+            try {
+                const entries = readdirSync(branchPath, { withFileTypes: true })
+                    .filter(e => e.isDirectory() && e.name.startsWith("app-"))
+                    .map(e => e.name)
+                    .sort();
+
+                if (entries.length > 0) {
+                    const latestApp = entries[entries.length - 1];
+                    const resourcesDir = join(branchPath, latestApp, "resources");
+                    if (existsSync(resourcesDir)) {
+                        targets.push({ name: `${branch.name} (${latestApp})`, resourcesDir });
+                    }
+                }
+            } catch {}
+        }
+    } else if (platform === "linux") {
+        const home = process.env.HOME || "";
+
+        // Standard Linux package paths
+        const nativeCandidates = [
+            { name: "Discord (/opt/discord)", dir: "/opt/discord/resources" },
+            { name: "Discord (/opt/Discord)", dir: "/opt/Discord/resources" },
+            { name: "Discord PTB (/opt/discord-ptb)", dir: "/opt/discord-ptb/resources" },
+            { name: "Discord Canary (/opt/discord-canary)", dir: "/opt/discord-canary/resources" },
+            { name: "Discord Dev (/opt/discord-development)", dir: "/opt/discord-development/resources" },
+            { name: "Discord (/usr/share/discord)", dir: "/usr/share/discord/resources" },
+            { name: "Discord PTB (/usr/share/discord-ptb)", dir: "/usr/share/discord-ptb/resources" },
+            { name: "Discord Canary (/usr/share/discord-canary)", dir: "/usr/share/discord-canary/resources" },
+            { name: "Discord Dev (/usr/share/discord-development)", dir: "/usr/share/discord-development/resources" },
+            { name: "Discord (/usr/lib/discord)", dir: "/usr/lib/discord/resources" },
+            { name: "Discord (/usr/lib64/discord)", dir: "/usr/lib64/discord/resources" },
+            { name: "Discord PTB (/usr/lib/discord-ptb)", dir: "/usr/lib/discord-ptb/resources" },
+            { name: "Discord Canary (/usr/lib/discord-canary)", dir: "/usr/lib/discord-canary/resources" },
+            { name: "Discord (User ~/.local/share)", dir: join(home, ".local/share/discord/resources") },
+            { name: "Discord PTB (User ~/.local/share)", dir: join(home, ".local/share/discord-ptb/resources") },
+            { name: "Discord Canary (User ~/.local/share)", dir: join(home, ".local/share/discord-canary/resources") }
+        ];
+
+        for (const candidate of nativeCandidates) {
+            if (existsSync(candidate.dir)) {
+                targets.push({ name: candidate.name, resourcesDir: candidate.dir });
+            }
+        }
+
+        // Flatpak paths
+        const flatpaks = [
+            { id: "com.discordapp.Discord", name: "Discord (Flatpak)" },
+            { id: "com.discordapp.DiscordPTB", name: "Discord PTB (Flatpak)" },
+            { id: "com.discordapp.DiscordCanary", name: "Discord Canary (Flatpak)" },
+            { id: "com.discordapp.DiscordDevelopment", name: "Discord Dev (Flatpak)" }
+        ];
+
+        const flatpakPrefixes = [
+            join(home, ".local/share/flatpak/app"),
+            "/var/lib/flatpak/app"
+        ];
+
+        for (const fp of flatpaks) {
+            for (const prefix of flatpakPrefixes) {
+                const resDir = join(prefix, fp.id, "current/active/files/discord/resources");
+                if (existsSync(resDir)) {
+                    targets.push({ name: fp.name, resourcesDir: resDir, flatpakId: fp.id });
+                    break;
+                }
+            }
+        }
+    } else if (platform === "darwin") {
+        const macBranches = [
+            { name: "Discord", dir: "/Applications/Discord.app/Contents/Resources" },
+            { name: "Discord PTB", dir: "/Applications/Discord PTB.app/Contents/Resources" },
+            { name: "Discord Canary", dir: "/Applications/Discord Canary.app/Contents/Resources" },
+            { name: "Discord Development", dir: "/Applications/Discord Development.app/Contents/Resources" }
+        ];
+
+        for (const b of macBranches) {
+            if (existsSync(b.dir)) {
+                targets.push({ name: b.name, resourcesDir: b.dir });
+            }
+        }
+    }
+
+    return targets;
 }
 
-function getFilename() {
-    switch (process.platform) {
-        case "win32":
-            return byArch({
-                arm64: "EquilotlCli-arm64.exe",
-                default: "EquilotlCli.exe"
-            });
-        case "darwin":
-            return byArch({
-                x64: "EquilotlCli-x64",
-                arm64: "EquilotlCli-arm64",
-                default: "EquilotlCli-universal"
-            });
-        case "linux":
-            return byArch({
-                arm64: "EquilotlCli-linux-arm64",
-                default: "EquilotlCli-Linux"
-            });
-        default:
-            throw new Error("Unsupported platform: " + process.platform);
+function closeRunningDiscord() {
+    try {
+        if (process.platform === "win32") {
+            execSync("taskkill /F /IM Discord.exe /IM DiscordPTB.exe /IM DiscordCanary.exe /IM DiscordDevelopment.exe", { stdio: "ignore" });
+        } else if (process.platform === "linux") {
+            execSync("killall -q discord discord-ptb discord-canary discord-development Discord DiscordPTB DiscordCanary DiscordDevelopment 2>/dev/null || true", { stdio: "ignore" });
+        } else if (process.platform === "darwin") {
+            execSync("killall -q Discord 'Discord PTB' 'Discord Canary' 'Discord Development' 2>/dev/null || true", { stdio: "ignore" });
+        }
+    } catch {}
+}
+
+function patchTarget(target) {
+    const appAsar = join(target.resourcesDir, "app.asar");
+    const backupAsar = join(target.resourcesDir, "_app.asar");
+
+    try {
+        if (existsSync(appAsar)) {
+            const isDir = lstatSync(appAsar).isDirectory();
+            if (!isDir) {
+                if (!existsSync(backupAsar)) {
+                    renameSync(appAsar, backupAsar);
+                } else {
+                    rmSync(appAsar, { force: true });
+                }
+            }
+        }
+
+        if (!existsSync(appAsar)) {
+            mkdirSync(appAsar, { recursive: true });
+        }
+
+        writeFileSync(join(appAsar, "package.json"), JSON.stringify({ name: "discord", main: "index.js" }));
+        const patcherPathNormalized = PATCHER_JS.replace(/\\/g, "/");
+        writeFileSync(join(appAsar, "index.js"), `require(${JSON.stringify(patcherPathNormalized)});\n`);
+
+        if (target.flatpakId && process.platform === "linux") {
+            try {
+                console.log(`Setting Flatpak filesystem override for ${target.flatpakId}...`);
+                execSync(`flatpak override --user ${target.flatpakId} --filesystem="${BASE_DIR}"`, { stdio: "inherit" });
+            } catch (fpErr) {
+                console.warn(`Could not set flatpak override automatically: ${fpErr}`);
+            }
+        }
+
+        console.log(`✅ [Qualcord] Successfully injected into ${target.name}!`);
+        return true;
+    } catch (err) {
+        console.error(`❌ [Qualcord] Failed to patch ${target.name}:`, err);
+        return false;
     }
 }
 
-async function ensureBinary() {
-    const filename = getFilename();
-    console.log("Downloading " + filename);
+function unpatchTarget(target) {
+    const appAsar = join(target.resourcesDir, "app.asar");
+    const backupAsar = join(target.resourcesDir, "_app.asar");
 
-    mkdirSync(FILE_DIR, { recursive: true });
-
-    const outputFile = join(FILE_DIR, filename);
-    const etag = existsSync(outputFile) && existsSync(ETAG_FILE)
-        ? readFileSync(ETAG_FILE, "utf-8")
-        : null;
-
-    const res = await fetch(BASE_URL + filename, {
-        headers: {
-            "User-Agent": "Equicord (https://github.com/Equicord/Equicord)",
-            "If-None-Match": etag
+    try {
+        if (!existsSync(backupAsar)) {
+            console.log(`ℹ️ [Qualcord] ${target.name} is not patched (no _app.asar found).`);
+            return false;
         }
-    });
 
-    if (res.status === 304) {
-        console.log("Up to date, not redownloading!");
-        return outputFile;
+        if (existsSync(appAsar)) {
+            const isDir = lstatSync(appAsar).isDirectory();
+            if (isDir) {
+                rmSync(appAsar, { recursive: true, force: true });
+            }
+        }
+
+        renameSync(backupAsar, appAsar);
+        console.log(`✅ [Qualcord] Successfully removed patch from ${target.name}!`);
+        return true;
+    } catch (err) {
+        console.error(`❌ [Qualcord] Failed to unpatch ${target.name}:`, err);
+        return false;
     }
-    if (!res.ok)
-        throw new Error(`Failed to download installer: ${res.status} ${res.statusText}`);
-
-    writeFileSync(ETAG_FILE, res.headers.get("etag"));
-
-    const body = Readable.fromWeb(res.body);
-    await finished(body.pipe(createWriteStream(outputFile, {
-        mode: 0o755,
-        autoClose: true
-    })));
-
-    console.log("Finished downloading!");
-
-    return outputFile;
 }
 
+function main() {
+    const args = process.argv.slice(2);
+    const isUninstall = args.includes("--uninstall") || args.includes("-u");
+    const isRepair = args.includes("--repair");
 
+    console.log("====================================================");
+    console.log("         ⚡ Qualcord Universal Injector");
+    console.log("====================================================");
+    console.log(`Platform: ${process.platform} (${process.arch})`);
 
-const installerBin = await ensureBinary();
+    const targets = findDiscordInstallations();
+    if (targets.length === 0) {
+        console.error("❌ No supported Discord installation found on your system!");
+        console.error("If you have a custom install path, make sure 'resources/app.asar' exists.");
+        process.exit(1);
+    }
 
-console.log("Now running Installer...");
+    console.log(`Found ${targets.length} Discord installation(s):`);
+    for (const t of targets) {
+        console.log(` - ${t.name}: ${t.resourcesDir}`);
+    }
 
-const argStart = process.argv.indexOf("--");
-const args = argStart === -1 ? [] : process.argv.slice(argStart + 1);
+    closeRunningDiscord();
 
-try {
-    execFileSync(installerBin, args, {
-        stdio: "inherit",
-        env: {
-            ...process.env,
-            EQUICORD_USER_DATA_DIR: BASE_DIR,
-            EQUICORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
-            EQUICORD_DEV_INSTALL: "1"
+    if (isUninstall) {
+        console.log("\nUninjecting Qualcord from Discord...");
+        let count = 0;
+        for (const t of targets) {
+            if (unpatchTarget(t)) count++;
         }
-    });
-} catch {
-    console.error("Something went wrong. Please check the logs above.");
+        console.log(`\nDone! Successfully unpatched ${count} installation(s).`);
+        return;
+    }
+
+    if (!existsSync(PATCHER_JS)) {
+        console.error(`\n❌ Error: Built patcher not found at: ${PATCHER_JS}`);
+        console.error("Please run 'pnpm build' or 'pnpm buildStandalone' first!\n");
+        process.exit(1);
+    }
+
+    console.log(`\nInjecting Qualcord dev build: ${PATCHER_JS}`);
+    let patched = 0;
+    for (const t of targets) {
+        if (patchTarget(t)) patched++;
+    }
+
+    console.log(`\n🚀 Finished! Patched ${patched} installation(s). Restart Discord to use Qualcord!`);
 }
+
+main();

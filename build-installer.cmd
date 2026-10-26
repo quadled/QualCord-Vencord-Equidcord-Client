@@ -7,8 +7,8 @@ echo         ⚡ Qualcord Client ^& Installer Build
 echo ====================================================
 echo.
 
-echo [1/3] Kompiliere Qualcord Client...
-call pnpm.cmd build
+echo [1/3] Kompiliere Qualcord Client (Standalone)...
+call pnpm.cmd buildStandalone
 if errorlevel 1 (
     echo [FEHLER] Qualcord Build fehlgeschlagen!
     exit /b %errorlevel%

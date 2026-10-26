@@ -6,7 +6,7 @@
 
 import { fetchBuffer, fetchJson } from "@main/utils/http";
 import { execFile as cpExecFile } from "child_process";
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
 
@@ -150,17 +150,17 @@ async function applyUpdate(): Promise<boolean> {
     }
 
     try {
-        const tempZip = join(process.env.TEMP || "C:\\Windows\\Temp", `qualcord_update_${Date.now()}.zip`);
+        const tempDir = process.env.TEMP || process.env.TMPDIR || (process.platform === "win32" ? "C:\\Windows\\Temp" : "/tmp");
+        const tempZip = join(tempDir, `qualcord_update_${Date.now()}.zip`);
         writeFileSync(tempZip, pendingZipBuffer);
         pendingZipBuffer = null;
 
-        const targetDir = __dirname; // Current active dist directory (dist/desktop or %LOCALAPPDATA%\Qualcord\dist)
+        const targetDir = __dirname; // Current active dist directory (dist/desktop, %LOCALAPPDATA%\Qualcord\dist, or ~/.local/share/qualcord)
 
         // Try tar.exe (built-in on Windows 10/11)
         if (process.platform === "win32") {
             try {
                 await execFile("tar.exe", ["-xf", tempZip, "-C", targetDir]);
-                return true;
             } catch {
                 // Fallback to PowerShell Expand-Archive
                 await execFile("powershell.exe", [
@@ -168,13 +168,21 @@ async function applyUpdate(): Promise<boolean> {
                     "-Command",
                     `Expand-Archive -Path '${tempZip}' -DestinationPath '${targetDir}' -Force`
                 ]);
-                return true;
             }
         } else {
-            // Linux / macOS: unzip
-            await execFile("unzip", ["-o", tempZip, "-d", targetDir]);
-            return true;
+            // Linux / macOS: unzip with fallback to python3 -m zipfile
+            try {
+                await execFile("unzip", ["-o", tempZip, "-d", targetDir]);
+            } catch {
+                await execFile("python3", ["-m", "zipfile", "-e", tempZip, targetDir]);
+            }
         }
+
+        try {
+            unlinkSync(tempZip);
+        } catch {}
+
+        return true;
     } catch (e) {
         console.error("[Qualcord Updater] Failed to apply update:", e);
         return false;

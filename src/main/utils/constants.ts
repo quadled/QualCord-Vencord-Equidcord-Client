@@ -26,14 +26,22 @@ const defaultQualcordDir = process.env.DISCORD_USER_DATA_DIR
     ? join(process.env.DISCORD_USER_DATA_DIR, "..", "QualcordData", suffix)
     : join(app.getPath("userData"), "..", "Qualcord", suffix);
 
+const defaultQualcordDirLower = process.env.DISCORD_USER_DATA_DIR
+    ? join(process.env.DISCORD_USER_DATA_DIR, "..", "qualcordData", suffix)
+    : join(app.getPath("userData"), "..", "qualcord", suffix);
+
 const legacyEquicordDir = process.env.DISCORD_USER_DATA_DIR
     ? join(process.env.DISCORD_USER_DATA_DIR, "..", "EquicordData", suffix)
     : join(app.getPath("userData"), "..", "Equicord", suffix);
 
 export const DATA_DIR = process.env.QUALCORD_USER_DATA_DIR ?? process.env.EQUICORD_USER_DATA_DIR ?? (
-    existsSync(defaultQualcordDir) || !existsSync(legacyEquicordDir)
+    existsSync(defaultQualcordDir)
         ? defaultQualcordDir
-        : legacyEquicordDir
+        : existsSync(defaultQualcordDirLower)
+            ? defaultQualcordDirLower
+            : !existsSync(legacyEquicordDir)
+                ? defaultQualcordDir
+                : legacyEquicordDir
 );
 
 export const SETTINGS_DIR = join(DATA_DIR, "settings");
