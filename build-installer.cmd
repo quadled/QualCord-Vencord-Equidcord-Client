@@ -17,6 +17,7 @@ if errorlevel 1 (
 echo.
 echo [2/3] Erstelle Qualcord-dist.zip Archiv...
 if not exist "installer" mkdir "installer"
+copy /y version.json dist\desktop\version.json >nul
 powershell -NoProfile -Command "Compress-Archive -Path 'dist\desktop\package.json','dist\desktop\patcher.js','dist\desktop\preload.js','dist\desktop\renderer.css','dist\desktop\renderer.js','version.json' -DestinationPath 'installer\Qualcord-dist.zip' -Force"
 if errorlevel 1 (
     echo [FEHLER] Erstellung von Qualcord-dist.zip fehlgeschlagen!

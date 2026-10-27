@@ -40,7 +40,7 @@ import { SettingsRouter } from "@webpack/common";
 
 import { get as dsGet } from "./api/DataStore";
 import { initLivePlugins } from "./api/LivePlugins";
-import { showNotice } from "./api/Notices";
+import { popNotice, showNotice } from "./api/Notices";
 import { NotificationData, showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
@@ -152,7 +152,10 @@ async function runUpdateCheck() {
                 showNotice(
                     "Qualcord wurde aktualisiert!",
                     "Neu starten",
-                    relaunch
+                    () => {
+                        popNotice();
+                        relaunch();
+                    }
                 );
             }
             return;

@@ -4,5 +4,5 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-export const QUALCORD_VERSION = "1.0.33";
-export const QUALCORD_BUILD = 34;
+export const QUALCORD_VERSION = "1.0.34";
+export const QUALCORD_BUILD = 35;

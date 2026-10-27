@@ -1,7 +1,7 @@
 {
     "name": "qualcord",
     "private": "true",
-    "version": "1.0.31",
+    "version": "1.0.34",
     "description": "Qualcord - Your custom Discord client with own plugins",
     "homepage": "https://github.com/quadled/QualCord-Vencord-Equidcord-Client#readme",
     "bugs": {

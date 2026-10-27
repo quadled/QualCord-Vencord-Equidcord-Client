@@ -1,6 +1,6 @@
 # <img src="src/qualcord-logo.png" width="42" align="left" alt="Qualcord"> Qualcord Client
 
-[![Version](https://img.shields.io/badge/version-1.0.31-8A2BE2?style=flat&logo=github)](https://github.com/quadled/QualCord-Vencord-Equidcord-Client)
+[![Version](https://img.shields.io/badge/version-1.0.34-8A2BE2?style=flat&logo=github)](https://github.com/quadled/QualCord-Vencord-Equidcord-Client)
 [![Discord](https://img.shields.io/discord/1442497818764771512?color=5865F2&label=Qualcord%20Discord&logo=discord&logoColor=white)](https://discord.gg/Pk3dVqS5Hn)
 [![Windows](https://img.shields.io/badge/Windows-Ready-blue?style=flat&logo=windows)](https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/QualcordInstaller.exe)
 [![Linux](https://img.shields.io/badge/Linux-Ready-FCC624?style=flat&logo=linux&logoColor=black)](https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.sh)

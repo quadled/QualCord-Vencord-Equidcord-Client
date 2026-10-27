@@ -24,12 +24,14 @@ const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main`;
 
 let pendingZipBuffer: Buffer | null = null;
 let cachedUpdates: UpdateData[] = [];
+let latestRemoteVersionData: any = null;
 
 async function getRepo() {
     return REPO_URL;
 }
 
 function getLocalVersion(): { version: string; build: number } {
+    let best = { version: QUALCORD_VERSION, build: QUALCORD_BUILD };
     try {
         const candidates = [
             join(__dirname, "version.json"),
@@ -40,12 +42,15 @@ function getLocalVersion(): { version: string; build: number } {
             if (existsSync(localVersionFile)) {
                 const data = JSON.parse(readFileSync(localVersionFile, "utf-8"));
                 if (data?.version) {
-                    return { version: data.version, build: Number(data.build) || 0 };
+                    const fileBuild = Number(data.build) || 0;
+                    if (fileBuild > best.build) {
+                        best = { version: data.version, build: fileBuild };
+                    }
                 }
             }
         }
     } catch {}
-    return { version: QUALCORD_VERSION, build: QUALCORD_BUILD };
+    return best;
 }
 
 function isRemoteNewer(remoteVersion: string, remoteBuild?: number): boolean {
@@ -83,6 +88,7 @@ async function listUpdates(): Promise<UpdateData[]> {
         });
 
         if (vData && vData.version) {
+            latestRemoteVersionData = vData;
             if (isRemoteNewer(vData.version, vData.build)) {
                 let changelog: UpdateData[] = [];
                 try {
@@ -181,6 +187,14 @@ async function applyUpdate(): Promise<boolean> {
         try {
             unlinkSync(tempZip);
         } catch {}
+
+        if (latestRemoteVersionData && latestRemoteVersionData.version) {
+            try {
+                writeFileSync(join(targetDir, "version.json"), JSON.stringify(latestRemoteVersionData, null, 2), "utf-8");
+            } catch (err) {
+                console.warn("[Qualcord Updater] Failed to sync targetDir version.json:", err);
+            }
+        }
 
         return true;
     } catch (e) {
