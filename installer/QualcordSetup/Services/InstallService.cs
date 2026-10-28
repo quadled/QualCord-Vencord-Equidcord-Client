@@ -215,8 +215,22 @@ public class InstallService
             }
         }
 
+        // Online Fallback if payload is missing
         if (zipStream == null)
-            throw new FileNotFoundException("Qualcord Payload (payload.zip) konnte weder in den Ressourcen noch im Programmverzeichnis gefunden werden!");
+        {
+            progress.Report((48, "Lade Qualcord von GitHub herunter..."));
+            try
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("QualcordInstaller/1.0");
+                var zipBytes = client.GetByteArrayAsync("https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/Qualcord-dist.zip").GetAwaiter().GetResult();
+                zipStream = new MemoryStream(zipBytes);
+            }
+            catch (Exception ex)
+            {
+                throw new FileNotFoundException("Qualcord Payload konnte weder in den Ressourcen noch online von GitHub geladen werden: " + ex.Message);
+            }
+        }
 
         using (zipStream)
         using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Read))
@@ -232,6 +246,12 @@ public class InstallService
 
                 entry.ExtractToFile(destPath, true);
             }
+        }
+
+        string patcherFile = Path.Combine(destinationDir, "patcher.js");
+        if (!File.Exists(patcherFile))
+        {
+            throw new FileNotFoundException($"Qualcord patcher.js konnte nach dem Entpacken nicht in {destinationDir} gefunden werden!");
         }
     }
 
@@ -298,7 +318,31 @@ public class InstallService
             File.WriteAllText(pkgJsonPath, "{\"name\":\"discord\",\"main\":\"index.js\"}");
 
             string patcherJsPath = Path.Combine(qualcordDir, "patcher.js").Replace("\\", "\\\\");
-            string indexJsContent = $"require(\"{patcherJsPath}\");\n";
+            string indexJsContent =
+                "const fs = require(\"fs\");\n" +
+                "const path = require(\"path\");\n\n" +
+                $"const patcher = \"{patcherJsPath}\";\n\n" +
+                "if (fs.existsSync(patcher)) {\n" +
+                "    try {\n" +
+                "        require(patcher);\n" +
+                "    } catch (err) {\n" +
+                "        console.error(\"[Qualcord] Fehler beim Laden des Patchers, starte originales Discord:\", err);\n" +
+                "        const originalAsar = path.join(__dirname, \"..\", \"_app.asar\");\n" +
+                "        if (fs.existsSync(originalAsar)) {\n" +
+                "            require(originalAsar);\n" +
+                "        } else {\n" +
+                "            throw err;\n" +
+                "        }\n" +
+                "    }\n" +
+                "} else {\n" +
+                "    console.warn(\"[Qualcord] Patcher nicht gefunden unter \" + patcher + \", starte originales Discord.\");\n" +
+                "    const originalAsar = path.join(__dirname, \"..\", \"_app.asar\");\n" +
+                "    if (fs.existsSync(originalAsar)) {\n" +
+                "        require(originalAsar);\n" +
+                "    } else {\n" +
+                "        throw new Error(\"[Qualcord] Weder patcher.js noch original _app.asar gefunden!\");\n" +
+                "    }\n" +
+                "}\n";
             string indexJsPath = Path.Combine(appAsarFile, "index.js");
             File.WriteAllText(indexJsPath, indexJsContent);
 

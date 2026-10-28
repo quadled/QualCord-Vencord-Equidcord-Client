@@ -1,11 +1,22 @@
-# Qualcord 1-Click Installer for PowerShell
+﻿param(
+    [switch]$Uninstall
+)
+
+# Qualcord 1-Click Installer & Uninstaller for PowerShell
 # Aufruf im PowerShell Terminal:
+# Installation:
 # irm https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.ps1 | iex
+# Deinstallation:
+# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/install.ps1))) -Uninstall
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Write-Host "====================================================" -ForegroundColor Magenta
-Write-Host "         ⚡ Qualcord Client 1-Klick Installer" -ForegroundColor Cyan
+if ($Uninstall) {
+    Write-Host "         ⚡ Qualcord Client Deinstallation" -ForegroundColor Red
+} else {
+    Write-Host "         ⚡ Qualcord Client 1-Klick Installer" -ForegroundColor Cyan
+}
 Write-Host "====================================================" -ForegroundColor Magenta
 Write-Host ""
 
@@ -81,9 +92,37 @@ if (-not (Test-GitInstalled)) {
 }
 
 # 1. Discord beenden falls offen
-Write-Host "-> Schliee laufende Discord Prozesse..." -ForegroundColor Yellow
+Write-Host "-> Schließe laufende Discord Prozesse..." -ForegroundColor Yellow
 Get-Process -Name $targetBranch.Proc -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 800
+
+# Falls Deinstallation gewünscht ist:
+if ($Uninstall) {
+    Write-Host "-> Entferne Qualcord Injection..." -ForegroundColor Yellow
+    $allAppDirs = Get-ChildItem -Path $targetBranch.Path -Directory -Filter "app-*"
+    foreach ($ad in $allAppDirs) {
+        $res = Join-Path $ad.FullName "resources"
+        $asar = Join-Path $res "app.asar"
+        $orig = Join-Path $res "_app.asar"
+
+        if (Test-Path $orig) {
+            if (Test-Path $asar) {
+                Remove-Item -Path $asar -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            Move-Item -Path $orig -Destination $asar -Force
+            Write-Host "   Originales app.asar wiederhergestellt in: $($ad.Name)" -ForegroundColor Green
+        }
+    }
+
+    Write-Host "✅ Qualcord wurde erfolgreich deinstalliert und Discord wiederhergestellt!" -ForegroundColor Green
+
+    # Discord neu starten
+    $updateExe = Join-Path $targetBranch.Path "Update.exe"
+    if (Test-Path $updateExe) {
+        Start-Process $updateExe -ArgumentList "--processStart $($targetBranch.Proc).exe"
+    }
+    return
+}
 
 # 2. Qualcord Verzeichnis einrichten
 $qualcordDir = Join-Path $localAppData "Qualcord\dist"
@@ -91,18 +130,41 @@ if (-not (Test-Path $qualcordDir)) {
     New-Item -ItemType Directory -Path $qualcordDir -Force | Out-Null
 }
 
-$localScriptZip = Join-Path $PSScriptRoot "Qualcord-dist.zip"
+$localScriptZip = if ($PSScriptRoot) { Join-Path $PSScriptRoot "Qualcord-dist.zip" } else { $null }
 $tempZip = Join-Path $env:TEMP "qualcord_installer_$([Guid]::NewGuid().ToString('N')).zip"
+$downloadUrl = "https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/Qualcord-dist.zip"
 
-if (Test-Path $localScriptZip) {
+if ($localScriptZip -and (Test-Path $localScriptZip)) {
     Write-Host "-> Verwende lokales Qualcord Archiv..." -ForegroundColor Cyan
     Expand-Archive -Path $localScriptZip -DestinationPath $qualcordDir -Force
 } else {
     Write-Host "-> Lade neueste Qualcord-Dateien von GitHub herunter..." -ForegroundColor Cyan
-    $downloadUrl = "https://raw.githubusercontent.com/quadled/QualCord-Vencord-Equidcord-Client/main/installer/Qualcord-dist.zip"
-    Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
-    Expand-Archive -Path $tempZip -DestinationPath $qualcordDir -Force
-    Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
+    try {
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing -TimeoutSec 30
+        Expand-Archive -Path $tempZip -DestinationPath $qualcordDir -Force
+    } catch {
+        Write-Host "⚠️ Download mit Invoke-WebRequest fehlgeschlagen, versuche Fallback..." -ForegroundColor Yellow
+        try {
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadFile($downloadUrl, $tempZip)
+            Expand-Archive -Path $tempZip -DestinationPath $qualcordDir -Force
+        } catch {
+            Write-Host "❌ Fehler beim Herunterladen des Qualcord-Archivs: $_" -ForegroundColor Red
+        }
+    } finally {
+        if (Test-Path $tempZip) {
+            Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+$patcherJs = Join-Path $qualcordDir "patcher.js"
+if (-not (Test-Path $patcherJs)) {
+    Write-Host "❌ Fehler: 'patcher.js' wurde in '$qualcordDir' nicht gefunden!" -ForegroundColor Red
+    Write-Host "   Entpacken oder Download von Qualcord ist fehlgeschlagen." -ForegroundColor Red
+    Write-Host "   Discord wurde zum Schutz NICHT verändert, damit Discord weiterhin startet." -ForegroundColor Yellow
+    Write-Host "   Bitte überprüfe deine Internetverbindung oder deinen Virenscanner." -ForegroundColor Yellow
+    return
 }
 
 # 3. Discord Injection patchen
@@ -131,9 +193,37 @@ if (-not (Test-Path $appAsar)) {
 $packageJson = '{"name":"discord","main":"index.js"}'
 Set-Content -Path (Join-Path $appAsar "package.json") -Value $packageJson -Encoding ASCII
 
-$patcherJsEscaped = (Join-Path $qualcordDir "patcher.js").Replace("\", "\\")
-$indexJs = "require(`"$patcherJsEscaped`");`n"
-Set-Content -Path (Join-Path $appAsar "index.js") -Value $indexJs -Encoding ASCII
+$patcherJsEscaped = $patcherJs.Replace("\", "\\")
+$indexJsLines = @(
+    'const fs = require("fs");',
+    'const path = require("path");',
+    '',
+    "const patcher = `"$patcherJsEscaped`";",
+    '',
+    'if (fs.existsSync(patcher)) {',
+    '    try {',
+    '        require(patcher);',
+    '    } catch (err) {',
+    '        console.error("[Qualcord] Fehler beim Laden des Patchers, starte originales Discord:", err);',
+    '        const originalAsar = path.join(__dirname, "..", "_app.asar");',
+    '        if (fs.existsSync(originalAsar)) {',
+    '            require(originalAsar);',
+    '        } else {',
+    '            throw err;',
+    '        }',
+    '    }',
+    '} else {',
+    '    console.warn("[Qualcord] Patcher nicht gefunden unter " + patcher + ", starte originales Discord.");',
+    '    const originalAsar = path.join(__dirname, "..", "_app.asar");',
+    '    if (fs.existsSync(originalAsar)) {',
+    '        require(originalAsar);',
+    '    } else {',
+    '        throw new Error("[Qualcord] Weder patcher.js noch original _app.asar gefunden!");',
+    '    }',
+    '}'
+)
+$indexJs = $indexJsLines -join "`n"
+Set-Content -Path (Join-Path $appAsar "index.js") -Value $indexJs -Encoding UTF8
 
 Write-Host "✅ Discord wurde erfolgreich mit Qualcord gepatcht!" -ForegroundColor Green
 
@@ -150,4 +240,4 @@ if (Test-Path $updateExe) {
 }
 
 Write-Host ""
-Write-Host "🚀 Qualcord ist erfolgreich gestartet! Viel Spa!" -ForegroundColor Magenta
+Write-Host "🚀 Qualcord ist erfolgreich gestartet! Viel Spaß!" -ForegroundColor Magenta

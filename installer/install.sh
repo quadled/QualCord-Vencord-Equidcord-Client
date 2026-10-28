@@ -244,6 +244,12 @@ if [ "$(whoami)" = "root" ] && [ "$REAL_USER" != "root" ]; then
     chown -R "$REAL_USER:$REAL_USER" "$QUALCORD_DIR" 2>/dev/null || true
 fi
 
+if [ ! -f "$QUALCORD_DIR/patcher.js" ]; then
+    echo "${C_RED}❌ Fehler: patcher.js wurde nicht in '$QUALCORD_DIR' gefunden!${C_RESET}"
+    echo "${C_YELLOW}   Discord wurde zum Schutz NICHT verändert.${C_RESET}"
+    exit 1
+fi
+
 echo "${C_GREEN}✅ Qualcord-Dateien erfolgreich bereitgestellt!${C_RESET}"
 echo ""
 
@@ -273,13 +279,31 @@ printf "%b" "$DISCORD_ENTRIES" | while IFS= read -r line; do
             run_elevated "$_res" mkdir -p "$_app"
         fi
 
-        # Write package.json stub
+        # Write package.json and safe fallback index.js
+        INDEX_SHIM="const fs = require('fs');
+const path = require('path');
+const patcher = '$QUALCORD_DIR/patcher.js';
+if (fs.existsSync(patcher)) {
+    try {
+        require(patcher);
+    } catch (err) {
+        console.error('[Qualcord] Error loading patcher, falling back to vanilla Discord:', err);
+        const originalAsar = path.join(__dirname, '..', '_app.asar');
+        if (fs.existsSync(originalAsar)) require(originalAsar);
+        else throw err;
+    }
+} else {
+    console.warn('[Qualcord] Patcher missing, falling back to vanilla Discord.');
+    const originalAsar = path.join(__dirname, '..', '_app.asar');
+    if (fs.existsSync(originalAsar)) require(originalAsar);
+    else throw new Error('[Qualcord] Missing patcher and _app.asar');
+}"
         if [ -w "$_app" ]; then
             printf '{"name":"discord","main":"index.js"}\n' > "$_app/package.json"
-            printf 'require("%s/patcher.js");\n' "$QUALCORD_DIR" > "$_app/index.js"
+            printf '%s\n' "$INDEX_SHIM" > "$_app/index.js"
         else
             printf '{"name":"discord","main":"index.js"}\n' | sudo tee "$_app/package.json" > /dev/null
-            printf 'require("%s/patcher.js");\n' "$QUALCORD_DIR" | sudo tee "$_app/index.js" > /dev/null
+            printf '%s\n' "$INDEX_SHIM" | sudo tee "$_app/index.js" > /dev/null
         fi
 
         # Grant Flatpak permissions if it's a flatpak target

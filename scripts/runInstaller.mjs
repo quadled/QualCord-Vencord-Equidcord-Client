@@ -152,7 +152,27 @@ function patchTarget(target) {
 
         writeFileSync(join(appAsar, "package.json"), JSON.stringify({ name: "discord", main: "index.js" }));
         const patcherPathNormalized = PATCHER_JS.replace(/\\/g, "/");
-        writeFileSync(join(appAsar, "index.js"), `require(${JSON.stringify(patcherPathNormalized)});\n`);
+        const indexJsShim = `const fs = require("fs");
+const path = require("path");
+const patcher = ${JSON.stringify(patcherPathNormalized)};
+
+if (fs.existsSync(patcher)) {
+    try {
+        require(patcher);
+    } catch (err) {
+        console.error("[Qualcord] Error loading patcher, falling back to vanilla Discord:", err);
+        const originalAsar = path.join(__dirname, "..", "_app.asar");
+        if (fs.existsSync(originalAsar)) require(originalAsar);
+        else throw err;
+    }
+} else {
+    console.warn("[Qualcord] Patcher missing, falling back to vanilla Discord.");
+    const originalAsar = path.join(__dirname, "..", "_app.asar");
+    if (fs.existsSync(originalAsar)) require(originalAsar);
+    else throw new Error("[Qualcord] Missing patcher and original _app.asar!");
+}
+`;
+        writeFileSync(join(appAsar, "index.js"), indexJsShim);
 
         if (target.flatpakId && process.platform === "linux") {
             try {

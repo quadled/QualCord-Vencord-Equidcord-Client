@@ -572,8 +572,39 @@ namespace QualcordInstaller
             string pkgJsonPath = Path.Combine(appAsarFile, "package.json");
             File.WriteAllText(pkgJsonPath, "{\"name\":\"discord\",\"main\":\"index.js\"}");
 
-            string patcherJsPath = Path.Combine(qualcordDir, "patcher.js").Replace("\\", "\\\\");
-            string indexJsContent = string.Format("require(\"{0}\");\n", patcherJsPath);
+            string patcherJsPath = Path.Combine(qualcordDir, "patcher.js");
+            if (!File.Exists(patcherJsPath))
+            {
+                log("Fehler: patcher.js wurde nicht gefunden! Discord wird nicht modifiziert.", Color.FromArgb(240, 71, 71));
+                return;
+            }
+
+            string patcherJsEscaped = patcherJsPath.Replace("\\", "\\\\");
+            string indexJsContent =
+                "const fs = require(\"fs\");\n" +
+                "const path = require(\"path\");\n\n" +
+                string.Format("const patcher = \"{0}\";\n\n", patcherJsEscaped) +
+                "if (fs.existsSync(patcher)) {\n" +
+                "    try {\n" +
+                "        require(patcher);\n" +
+                "    } catch (err) {\n" +
+                "        console.error(\"[Qualcord] Fehler beim Laden des Patchers, starte originales Discord:\", err);\n" +
+                "        const originalAsar = path.join(__dirname, \"..\", \"_app.asar\");\n" +
+                "        if (fs.existsSync(originalAsar)) {\n" +
+                "            require(originalAsar);\n" +
+                "        } else {\n" +
+                "            throw err;\n" +
+                "        }\n" +
+                "    }\n" +
+                "} else {\n" +
+                "    console.warn(\"[Qualcord] Patcher nicht gefunden unter \" + patcher + \", starte originales Discord.\");\n" +
+                "    const originalAsar = path.join(__dirname, \"..\", \"_app.asar\");\n" +
+                "    if (fs.existsSync(originalAsar)) {\n" +
+                "        require(originalAsar);\n" +
+                "    } else {\n" +
+                "        throw new Error(\"[Qualcord] Weder patcher.js noch original _app.asar gefunden!\");\n" +
+                "    }\n" +
+                "}\n";
             string indexJsPath = Path.Combine(appAsarFile, "index.js");
             File.WriteAllText(indexJsPath, indexJsContent);
 
