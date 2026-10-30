@@ -26,6 +26,7 @@ export const SYSTEM_DEFAULT_PLUGIN_IDS: string[] = [
     // Standardmäßig aktivierte Plugins:
     "MyCustomPlugin",
     "QualQuester",
+    "AppleBootScreen",
 ];
 
 /**
