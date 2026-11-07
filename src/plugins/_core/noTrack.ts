@@ -152,7 +152,18 @@ export default definePlugin({
     },
 
     analyticsTrackingStoreMaker() {
-        class AnalyticsTrackingStoreStub extends Flux.Store {
+        const Base = (FluxDispatcher && typeof Flux?.Store === "function" ? Flux.Store : class {
+            constructor(_dispatcher?: any) {}
+            getName() { return "AnalyticsTrackingStore"; }
+            addChangeListener() {}
+            addConditionalChangeListener() {}
+            addReactChangeListener() {}
+            removeChangeListener() {}
+            removeReactChangeListener() {}
+            emitChange() {}
+        }) as typeof Flux.Store;
+
+        class AnalyticsTrackingStoreStub extends Base {
             static displayName = "AnalyticsTrackingStore";
 
             requestDrain() { }
@@ -180,6 +191,17 @@ export default definePlugin({
             }
         }
 
-        return new AnalyticsTrackingStoreStub(FluxDispatcher);
+        try {
+            return new AnalyticsTrackingStoreStub(FluxDispatcher);
+        } catch {
+            return {
+                getName: () => "AnalyticsTrackingStore",
+                requestDrain: () => {},
+                submitEventsImmediately: async () => { throw { ok: false }; },
+                addChangeListener: () => {},
+                removeChangeListener: () => {},
+                emitChange: () => {},
+            };
+        }
     }
 });

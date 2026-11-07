@@ -7,7 +7,10 @@
 import { findByCodeLazy, findLazy } from "@webpack";
 
 let defaultSounds: null | string[] = null;
-const findDefaultSounds = findLazy(module => module.resolve && module.id && module.keys().some(key => key.endsWith(".mp3")), false);
+const findDefaultSounds = findLazy(
+    module => module?.resolve && module?.id && typeof module?.keys === "function" && module.keys().some((key: any) => typeof key === "string" && key.endsWith(".mp3")),
+    false
+);
 const AudioPlayerConstructor = findByCodeLazy("could not play audio");
 
 export type AudioProcessor = (data: PreprocessAudioData) => void;
@@ -251,10 +254,19 @@ export function removeAudioProcessor(key: string): void {
 
 /** Returns an array of all internal Discord audio filenames. */
 export function defaultAudioNames(): string[] {
-    defaultSounds ??= (findDefaultSounds.keys() || []).map(key => {
-        const match = key.match(/((?:\w|-)+)\.mp3$/);
-        return match ? match[1] : null;
-    }).filter(Boolean) as string[];
+    if (!defaultSounds) {
+        try {
+            const keys = findDefaultSounds?.keys?.();
+            if (keys && Array.isArray(keys)) {
+                defaultSounds = keys.map(key => {
+                    const match = String(key).match(/((?:\w|-)+)\.mp3$/);
+                    return match ? match[1] : null;
+                }).filter(Boolean) as string[];
+            }
+        } catch {
+            // Audio module not ready yet
+        }
+    }
 
-    return defaultSounds;
+    return defaultSounds ?? [];
 }
