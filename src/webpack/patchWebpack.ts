@@ -205,17 +205,41 @@ define(Function.prototype, "m", {
 
             // Overwrite Webpack's defineExports function to define the export descriptors configurable.
             // This is needed so we can later blacklist specific exports from Webpack search by making them non-enumerable
-            this.d = function (exports, definition) {
-                for (const key in definition) {
-                    if (Object.hasOwn(definition, key) && !Object.hasOwn(exports, key)) {
-                        Object.defineProperty(exports, key, {
-                            enumerable: true,
-                            configurable: true,
-                            get: definition[key],
-                        });
+            this.d = function (exports: Record<string, any>, definition?: Record<string, any>, values?: Record<string, any>) {
+                if (definition) {
+                    for (const key in definition) {
+                        if (Object.hasOwn(definition, key) && !Object.hasOwn(exports, key)) {
+                            const val = definition[key];
+                            if (typeof val === "function") {
+                                Object.defineProperty(exports, key, {
+                                    enumerable: true,
+                                    configurable: true,
+                                    get: val,
+                                });
+                            } else {
+                                Object.defineProperty(exports, key, {
+                                    enumerable: true,
+                                    configurable: true,
+                                    writable: true,
+                                    value: val,
+                                });
+                            }
+                        }
                     }
                 }
-            };
+                if (values) {
+                    for (const key in values) {
+                        if (Object.hasOwn(values, key) && !Object.hasOwn(exports, key)) {
+                            Object.defineProperty(exports, key, {
+                                enumerable: true,
+                                configurable: true,
+                                writable: true,
+                                value: values[key],
+                            });
+                        }
+                    }
+                }
+            } as any;
         };
     }
 });
