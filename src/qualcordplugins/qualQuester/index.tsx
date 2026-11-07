@@ -22,6 +22,7 @@ export function QuestIcon(props: SVGProps<SVGSVGElement>) {
             {...props}
         >
             <path
+                fill="currentColor"
                 fillRule="evenodd"
                 clipRule="evenodd"
                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.64 6.72-2.12 5.09a1 1 0 0 1-.55.55l-5.09 2.12a.5.5 0 0 1-.65-.65l2.12-5.09a1 1 0 0 1 .55-.55l5.09-2.12a.5.5 0 0 1 .65.65zM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"

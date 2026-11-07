@@ -94,6 +94,7 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
         "aria-label": ariaLabel,
     } = props;
 
+    const [hovered, setHovered] = useState(false);
     const label = ariaLabel ?? (typeof tooltip === "string" ? tooltip : undefined);
 
     return (
@@ -102,11 +103,28 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
                 <Clickable
                     {...{ innerRef: ref } as any}
                     className={classes(HeaderBarClasses.clickable, className)}
-                    style={{ width: Math.max(iconSize, 24), height: Math.max(iconSize, 24), boxSizing: "content-box", justifyContent: "center" }}
+                    style={{
+                        width: Math.max(iconSize, 24),
+                        height: Math.max(iconSize, 24),
+                        boxSizing: "content-box",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: selected || hovered ? "var(--interactive-hover)" : "var(--interactive-normal)",
+                        cursor: "pointer",
+                        margin: "0 4px",
+                        transition: "color 0.15s ease"
+                    }}
                     onClick={onClick}
                     onContextMenu={onContextMenu}
-                    onMouseEnter={onMouseEnter}
-                    onMouseLeave={onMouseLeave}
+                    onMouseEnter={() => {
+                        setHovered(true);
+                        onMouseEnter();
+                    }}
+                    onMouseLeave={() => {
+                        setHovered(false);
+                        onMouseLeave();
+                    }}
                     role="button"
                     tabIndex={0}
                     aria-label={label}
