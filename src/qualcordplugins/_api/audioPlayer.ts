@@ -70,8 +70,8 @@ export default definePlugin({
             // Pass undefined for options in default Discord calls to the audio constructor.
             find: "SoundUtils",
             replacement: {
-                match: /return new (\i)\((.{0,50}?)(?=}function)/,
-                replace: "return new $1(undefined,$2"
+                match: /return new (\i)\(([^)]+)\)(?=\})/,
+                replace: "return new $1(undefined,$2)"
             }
         },
         {
@@ -123,14 +123,29 @@ export default definePlugin({
         player.preprocessDataCurrent.volume *= 100;
 
         for (const processor of Object.values(audioProcessorFunctions)) {
-            processor(player.preprocessDataCurrent);
+            try {
+                processor(player.preprocessDataCurrent);
+            } catch (err) {
+                console.error("[AudioPlayerAPI] Error in audio processor:", err);
+            }
         }
 
         player.preprocessDataCurrent.volume /= 100;
         player.audio = player.preprocessDataCurrent.audio;
+        player.name = player.audio;
+        (player as any)._name = player.audio;
         player.type = identifyAudioType(player.preprocessDataCurrent.audio);
-        player._volume = Math.max(0, Math.min(1, player.preprocessDataCurrent.volume));
-        player._speed = Math.max(0.0625, Math.min(16, player.preprocessDataCurrent.speed));
+
+        const currentVolume = typeof player.preprocessDataCurrent.volume === "number" && !isNaN(player.preprocessDataCurrent.volume)
+            ? player.preprocessDataCurrent.volume
+            : 1;
+        const currentSpeed = typeof player.preprocessDataCurrent.speed === "number" && !isNaN(player.preprocessDataCurrent.speed)
+            ? player.preprocessDataCurrent.speed
+            : 1;
+
+        player._volume = Math.max(0, Math.min(1, currentVolume));
+        player._speed = Math.max(0.0625, Math.min(16, currentSpeed));
+        (player as any)._playbackRate = player._speed;
 
         if (player.preprocessDataCurrent.audio !== player.preprocessDataPrevious?.audio) {
             player.destroyAudio();
@@ -152,37 +167,86 @@ export default definePlugin({
 
     buildPlayer(
         player: AudioPlayerInternal,
-        options: AudioPlayerOptions = {},
-        audio: string,
-        unused: any,
-        internalVolume: number,
-        channel: string
+        arg0: any,
+        arg1?: any,
+        arg2?: any,
+        arg3?: any,
+        arg4?: any
     ) {
-        if (typeof options === "string") {
-            channel = internalVolume as any;
-            internalVolume = unused;
-            unused = audio;
-            audio = options;
-            options = {};
+        let soundOptions: AudioPlayerOptions = {};
+        let soundName = "";
+        let soundVolume = 1;
+        let soundChannel = "default";
+        let trackNotificationFailure = false;
+
+        if (typeof arg0 === "object" && arg0 !== null) {
+            // Equicord style: (options, audio, unused, internalVolume, channel)
+            soundOptions = arg0;
+            soundName = typeof arg1 === "string" ? arg1 : "";
+            if (typeof arg3 === "number") {
+                soundVolume = arg3;
+            } else if (typeof soundOptions.volume === "number") {
+                soundVolume = soundOptions.volume / 100;
+            }
+            if (typeof arg4 === "string") soundChannel = arg4;
+        } else if (typeof arg0 === "string") {
+            // Direct Discord call without options:
+            soundName = arg0;
+            soundOptions = {};
+            if (typeof arg1 === "string" && typeof arg2 === "number") {
+                // (soundFile, soundName, volume, channel, trackNotificationFailure)
+                soundVolume = arg2;
+                if (typeof arg3 === "string") soundChannel = arg3;
+                if (typeof arg4 === "boolean") trackNotificationFailure = arg4;
+            } else if (typeof arg1 === "number") {
+                // (soundName, volume, channel)
+                soundVolume = arg1;
+                if (typeof arg2 === "string") soundChannel = arg2;
+            } else if (typeof arg2 === "number") {
+                soundVolume = arg2;
+                if (typeof arg3 === "string") soundChannel = arg3;
+            }
+        } else if (arg0 == null && typeof arg1 === "string") {
+            // Patched Discord call: (undefined, soundFile, soundName, volume, channel)
+            soundName = arg1;
+            soundOptions = {};
+            if (typeof arg2 === "string" && typeof arg3 === "number") {
+                soundVolume = arg3;
+                if (typeof arg4 === "string") soundChannel = arg4;
+            } else if (typeof arg2 === "number") {
+                soundVolume = arg2;
+                if (typeof arg3 === "string") soundChannel = arg3;
+            }
+        } else {
+            soundName = typeof arg1 === "string" ? arg1 : (typeof arg0 === "string" ? arg0 : "");
         }
 
+        const safeVolume = typeof soundVolume === "number" && !isNaN(soundVolume)
+            ? Math.max(0, Math.min(1, soundVolume))
+            : (typeof soundOptions.volume === "number" ? Math.max(0, Math.min(1, soundOptions.volume / 100)) : 1);
+        const safeSpeed = Math.max(0.0625, Math.min(16, soundOptions.speed ?? 1));
+
         player.preprocessDataOriginal = {
-            audio: audio,
-            type: identifyAudioType(audio),
-            volume: Math.max(0, Math.min(1, (internalVolume ?? (options.volume ? options.volume / 100 : 1)))),
-            speed: Math.max(0.0625, Math.min(16, options.speed ?? 1)),
+            audio: soundName,
+            type: identifyAudioType(soundName),
+            volume: safeVolume,
+            speed: safeSpeed,
         };
 
-        player.audio = player.preprocessDataOriginal.audio;
+        player.name = soundName;
+        (player as any)._name = soundName;
+        player.audio = soundName;
         player._audio = null;
-        player._volume = player.preprocessDataOriginal.volume;
-        player._speed = player.preprocessDataOriginal.speed;
-        player.preload = options.preload ?? false;
-        player.persistent = options.persistent ?? false;
-        player.type = identifyAudioType(audio);
-        player.outputChannel = channel;
-        player.onEnded = options.onEnded;
-        player.onError = options.onError;
+        player._volume = safeVolume;
+        player._speed = safeSpeed;
+        (player as any)._playbackRate = safeSpeed;
+        player.preload = soundOptions.preload ?? false;
+        player.persistent = soundOptions.persistent ?? false;
+        player.type = identifyAudioType(soundName);
+        player.outputChannel = soundChannel || "default";
+        (player as any).trackNotificationFailure = trackNotificationFailure;
+        player.onEnded = soundOptions.onEnded;
+        player.onError = soundOptions.onError;
 
         player.processAudio = () => this.processAudio(player);
         player.processAudio();

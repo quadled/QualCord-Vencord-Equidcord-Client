@@ -6,6 +6,30 @@
 
 import { findByCodeLazy, findLazy } from "@webpack";
 
+const FALLBACK_DISCORD_SOUNDS = [
+    "activity_end", "activity_launch", "activity_user_join", "activity_user_left",
+    "asmr_message1", "bit_message1", "bop_message1", "call_calling", "call_ringing",
+    "call_ringing_beat", "call_ringing_snow_halation", "call_ringing_snowsgiving",
+    "camera_off", "camera_on", "clip_error", "clip_save", "ddr-down", "ddr-left",
+    "ddr-right", "ddr-up", "deafen", "discodo", "disconnect", "doggo_bark",
+    "doggo_cat", "doggo_cat_hurt", "doggo_death", "doggo_dog_death", "doggo_dog_hurt",
+    "doggo_human_hit", "doggo_music", "doggo_rat", "doggo_rat_hit", "doggo_skeleton",
+    "doggo_skeleton_die", "doggo_skeleton_hit", "doggo_slash", "doggo_zombie",
+    "doggo_zombie_hit", "ducky_message1", "halloween_call_calling", "halloween_call_ringing",
+    "halloween_deafen", "halloween_defean", "halloween_disconnect", "halloween_message1",
+    "halloween_mute", "halloween_undeafen", "halloween_undefean", "halloween_unmute",
+    "halloween_user_join", "halloween_user_leave", "hang_status_select", "human_man",
+    "lofi_message1", "mention1", "mention2", "mention3", "message1", "message2",
+    "message3", "mute", "overlayunlock", "poggermode_achievement_unlock",
+    "poggermode_applause", "poggermode_enabled", "poggermode_message_send",
+    "ptt_start", "ptt_stop", "reconnect", "robot_man", "stage_waiting",
+    "stream_ended", "stream_started", "stream_user_joined", "stream_user_left",
+    "success", "undeafen", "unmute", "user_join", "user_leave", "user_moved",
+    "vibing_wumpus", "voice_message_recording_stopped", "winter_call_calling",
+    "winter_call_ringing", "winter_deafen", "winter_disconnect", "winter_mute",
+    "winter_undeafen", "winter_unmute", "winter_user_join", "winter_user_leave"
+];
+
 let defaultSounds: null | string[] = null;
 const findDefaultSounds = findLazy(
     module => module?.resolve && module?.id && typeof module?.keys === "function" && module.keys().some((key: any) => typeof key === "string" && key.endsWith(".mp3")),
@@ -45,6 +69,7 @@ export interface PreprocessAudioData {
 }
 
 export interface AudioPlayerInternal {
+    name?: string;
     preprocessDataOriginal: PreprocessAudioData;
     preprocessDataPrevious: PreprocessAudioData | null;
     preprocessDataCurrent: PreprocessAudioData;
@@ -221,7 +246,19 @@ export function playAudio(audio: string, options: AudioPlayerOptions = {}): Audi
  * @returns The identified AudioType.
  */
 export function identifyAudioType(audio: string): AudioType {
+    if (!audio || typeof audio !== "string") return AudioType.OTHER;
+
+    if (audio.startsWith("data:")) return AudioType.DATA;
+    if (audio.startsWith("blob:")) return AudioType.BLOB;
+    if (audio.startsWith("http://") || audio.startsWith("https://")) return AudioType.URL;
+    if (audio.startsWith("file://")) return AudioType.PATH;
+
     if (defaultAudioNames().includes(audio)) return AudioType.DISCORD;
+
+    // Plain sound identifier without URL characters is an internal sound name
+    if (/^[a-zA-Z0-9_-]+$/.test(audio)) {
+        return AudioType.DISCORD;
+    }
 
     try {
         const url = new URL(audio);
@@ -231,7 +268,7 @@ export function identifyAudioType(audio: string): AudioType {
         if (url.protocol === "file:") return AudioType.PATH;
         return AudioType.OTHER;
     } catch {
-        return AudioType.OTHER;
+        return AudioType.DISCORD;
     }
 }
 
@@ -255,18 +292,20 @@ export function removeAudioProcessor(key: string): void {
 /** Returns an array of all internal Discord audio filenames. */
 export function defaultAudioNames(): string[] {
     if (!defaultSounds) {
+        const soundSet = new Set<string>(FALLBACK_DISCORD_SOUNDS);
         try {
             const keys = findDefaultSounds?.keys?.();
             if (keys && Array.isArray(keys)) {
-                defaultSounds = keys.map(key => {
+                for (const key of keys) {
                     const match = String(key).match(/((?:\w|-)+)\.mp3$/);
-                    return match ? match[1] : null;
-                }).filter(Boolean) as string[];
+                    if (match?.[1]) soundSet.add(match[1]);
+                }
             }
         } catch {
             // Audio module not ready yet
         }
+        defaultSounds = Array.from(soundSet);
     }
 
-    return defaultSounds ?? [];
+    return defaultSounds ?? FALLBACK_DISCORD_SOUNDS;
 }
