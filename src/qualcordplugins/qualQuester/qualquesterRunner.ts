@@ -2046,12 +2046,12 @@ export function launchQualquester() {
                     } catch (e) { }
 
                     Mods = {
-                        QuestStore: W.findStore("QuestStore") || W.findStore("QuestsStore"),
-                        RunStore: W.findStore("RunningGameStore"),
-                        StreamStore: W.findStore("ApplicationStreamingStore"),
-                        ChanStore: W.findStore("ChannelStore"),
-                        GuildChanStore: W.findStore("GuildChannelStore"),
-                        UserStore: W.findStore("UserStore"),
+                        QuestStore: W.Common?.QuestStore || W.findStore("QuestStore") || W.findStore("QuestsStore"),
+                        RunStore: W.Common?.RunningGameStore || W.findStore("RunningGameStore"),
+                        StreamStore: W.Common?.ApplicationStreamingStore || W.findStore("ApplicationStreamingStore"),
+                        ChanStore: W.Common?.ChannelStore || W.findStore("ChannelStore"),
+                        GuildChanStore: W.Common?.GuildChannelStore || W.findStore("GuildChannelStore"),
+                        UserStore: W.Common?.UserStore || W.findStore("UserStore"),
                         OrbStore: W.findStore("VirtualCurrencyStore"),
                         Premium: W.findByProps("canUseMoreQuestOrbs", "canUseShopDiscounts"),
                         Dispatcher: W.Common?.FluxDispatcher || W.findByProps("dispatch", "subscribe", "flushWaitQueue"),

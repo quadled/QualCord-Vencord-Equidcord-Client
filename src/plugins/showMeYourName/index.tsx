@@ -27,6 +27,17 @@ import { JSX } from "react";
 const SMYNC = classNameFactory();
 const wrapEmojis = findByCodeLazy("lastIndex;return");
 
+function safeWrapEmojis(name: any): any {
+    if (!name || typeof name !== "string") return name ?? "";
+    try {
+        if (typeof wrapEmojis === "function") {
+            const res = wrapEmojis(name);
+            if (res != null && res !== "") return res;
+        }
+    } catch { }
+    return name;
+}
+
 interface SearchUserResult {
     text: string;
     user: User;
@@ -508,10 +519,10 @@ function getMessageName(props: messageProps): [string | null, JSX.Element | null
     const { message, userOverride, isRepliedMessage, withMentionPrefix } = props;
     const isWebhook = !!message?.webhookId && !message?.interaction;
     const channel = message ? ChannelStore.getChannel(message.channel_id) || null : null;
-    const target = userOverride || message?.author;
-    const user = isWebhook ? target : target ? UserStore.getUser(target.id) : null;
-    const member = isWebhook ? null : target && channel ? GuildMemberStore.getMember(channel.guild_id, target.id) : null;
-    const author = user && member ? { ...user, ...member } : user || member || null;
+    const target = userOverride || message?.author || (props as any)?.author || (props as any)?.user;
+    const user = isWebhook ? target : (target ? (UserStore?.getUser?.(target.id) ?? target) : null);
+    const member = isWebhook ? null : (target && channel ? (GuildMemberStore?.getMember?.(channel.guild_id, target.id) ?? (message as any)?.member ?? (props as any)?.member ?? null) : null);
+    const author = user && member ? { ...user, ...member } : user || member || target || null;
     const mentionSymbol = hideDefaultAtSign && (!isRepliedMessage || replies) ? "" : withMentionPrefix ? "@" : "";
     return renderUsername(author, channel?.id || null, message?.id || null, isRepliedMessage ? "replies" : "messages", mentionSymbol, false, !!channel?.guild_id, props.colorString, props.colorStrings);
 }
@@ -528,9 +539,9 @@ function getMentionNameElement(props: mentionProps): JSX.Element | null {
     const { hideDefaultAtSign, mentions } = settings.use(["hideDefaultAtSign", "mentions"]);
     const { channelId, userId, props: nestedProps } = props;
     const channel = channelId ? ChannelStore.getChannel(channelId) || null : null;
-    const user = UserStore.getUser(userId);
-    const member = channel ? GuildMemberStore.getMember(channel.guild_id, userId) : null;
-    const author = user && member ? { ...user, ...member } : user || member || null;
+    const user = (userId ? UserStore?.getUser?.(userId) : null) ?? (props as any)?.user ?? null;
+    const member = channel && userId ? (GuildMemberStore?.getMember?.(channel.guild_id, userId) ?? (props as any)?.member ?? null) : null;
+    const author = user && member ? { ...user, ...member } : user || member || (user == null && (props as any)?.username ? { id: userId, username: (props as any).username, globalName: (props as any).username } : null);
     const mentionSymbol = hideDefaultAtSign && mentions ? "" : "@";
 
     let colorString: string | undefined = undefined;
@@ -805,31 +816,31 @@ function renderUsername(
     let fourth = outputs.shift();
     let fifth = outputs.shift();
 
-    const firstValueWrapped = hookless ?
-        (first.name || "")
-        : wrapEmojis(first.name || "");
+    const firstValueWrapped = (hookless ?
+        (first?.name || "")
+        : safeWrapEmojis(first?.name || "")) || first?.name || "";
 
-    const secondValueWrapped = hookless ?
+    const secondValueWrapped = (hookless ?
         ((second ?? {}).name || "")
-        : wrapEmojis((second ?? {}).name || "");
+        : safeWrapEmojis((second ?? {}).name || "")) || (second ?? {}).name || "";
 
-    const thirdValueWrapped = hookless ?
+    const thirdValueWrapped = (hookless ?
         ((third ?? {}).name || "")
-        : wrapEmojis((third ?? {}).name || "");
+        : safeWrapEmojis((third ?? {}).name || "")) || (third ?? {}).name || "";
 
-    const fourthValueWrapped = hookless ?
+    const fourthValueWrapped = (hookless ?
         ((fourth ?? {}).name || "")
-        : wrapEmojis((fourth ?? {}).name || "");
+        : safeWrapEmojis((fourth ?? {}).name || "")) || (fourth ?? {}).name || "";
 
-    const fifthValueWrapped = hookless ?
+    const fifthValueWrapped = (hookless ?
         ((fifth ?? {}).name || "")
-        : wrapEmojis((fifth ?? {}).name || "");
+        : safeWrapEmojis((fifth ?? {}).name || "")) || (fifth ?? {}).name || "";
 
-    first.wrapped = firstValueWrapped;
-    second && (second.wrapped = secondValueWrapped);
-    third && (third.wrapped = thirdValueWrapped);
-    fourth && (fourth.wrapped = fourthValueWrapped);
-    fifth && (fifth.wrapped = fifthValueWrapped);
+    if (first) first.wrapped = firstValueWrapped || first.name;
+    if (second) second.wrapped = secondValueWrapped || second.name;
+    if (third) third.wrapped = thirdValueWrapped || third.name;
+    if (fourth) fourth.wrapped = fourthValueWrapped || fourth.name;
+    if (fifth) fifth.wrapped = fifthValueWrapped || fifth.name;
 
     if (isMessage && !messages) {
         return [null, null, null];
@@ -849,7 +860,7 @@ function renderUsername(
         return [null, null, null];
     } else if (isVoice && !reactions) {
         return [null, null, null];
-    } else if (!author || !username) {
+    } else if (!author || (!username && !display && !nick)) {
         return [null, null, null];
     }
 
@@ -961,7 +972,7 @@ function renderUsername(
                                 showStaticEffect={showStaticDisplayNameEffect}
                                 useMessageLayout={isMessage}
                             />
-                            : first.wrapped}
+                            : (first.wrapped || first.name)}
                     </span>
                 </span>
             )}
@@ -1003,7 +1014,7 @@ function renderUsername(
                                 showStaticEffect={showStaticDisplayNameEffect}
                                 useMessageLayout={isMessage}
                             />
-                            : name.wrapped}
+                            : (name.wrapped || name.name)}
                     </span>
                     <span style={affixColor as React.CSSProperties} className={suffixClasses}>
                         {name.suffix}</span>

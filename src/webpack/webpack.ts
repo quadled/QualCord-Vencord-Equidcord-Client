@@ -81,7 +81,7 @@ export const filters = {
         return filter;
     },
     byStoreName: (name: StoreNameFilter): FilterFn => m =>
-        m.constructor?.displayName === name,
+        m?.constructor?.displayName === name || m?.getName?.() === name || m?.displayName === name,
 
     componentByCode: (...code: CodeFilter): FilterFn => {
         const byCodeFilter = filters.byCode(...code);
@@ -480,11 +480,13 @@ export function findByCodeLazy(...code: CodeFilter) {
 }
 
 function populateFluxStoreMap() {
-    const { Flux } = require("./common") as typeof import("./common");
+    try {
+        const { Flux } = require("./common") as typeof import("./common");
 
-    Flux.Store.getAll?.().forEach(store =>
-        fluxStores.set(store.getName(), store)
-    );
+        Flux?.Store?.getAll?.()?.forEach?.((store: any) =>
+            fluxStores.set(store.getName(), store)
+        );
+    } catch { }
 
     try {
         const getLibdiscore = findByCode("libdiscoreWasm is not initialized");

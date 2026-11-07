@@ -18,15 +18,15 @@ export function QuestIcon(props: SVGProps<SVGSVGElement>) {
             width={props.width ?? 18}
             height={props.height ?? 18}
             viewBox="0 0 24 24"
-            fill="currentColor"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             {...props}
         >
-            <path
-                fill="currentColor"
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.64 6.72-2.12 5.09a1 1 0 0 1-.55.55l-5.09 2.12a.5.5 0 0 1-.65-.65l2.12-5.09a1 1 0 0 1 .55-.55l5.09-2.12a.5.5 0 0 1 .65.65zM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"
-            />
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" stroke="none" />
         </svg>
     );
 }

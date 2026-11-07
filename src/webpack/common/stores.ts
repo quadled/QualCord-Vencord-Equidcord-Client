@@ -16,14 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { proxyLazy } from "@utils/lazy";
 import { ConstEnumToRuntimeEnum } from "@utils/types";
 import * as t from "@vencord/discord-types";
 import * as enums from "@vencord/discord-types/enums";
-import { findByCodeLazy, findByPropsLazy } from "@webpack";
+import { find, findByCodeLazy, findByPropsLazy } from "@webpack";
 
 import { waitForStore } from "./internal";
 
-export const Flux: t.Flux = findByPropsLazy("connectStores");
+export const Flux: t.Flux = proxyLazy(() => {
+    const mod = find((m: any) =>
+        m?.Store?.getAll != null ||
+        m?.default?.Store?.getAll != null ||
+        m?.connectStores != null
+    ) as any;
+    if (!mod) return {} as any;
+    if (mod.Store) return mod;
+    if (mod.default?.Store) return mod.default;
+    return mod;
+});
 
 export type GenericStore = t.FluxStore & Record<string, any>;
 

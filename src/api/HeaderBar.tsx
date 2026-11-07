@@ -110,7 +110,7 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: selected || hovered ? "var(--interactive-hover)" : "var(--interactive-normal)",
+                        color: selected || hovered ? "var(--interactive-hover, #ffffff)" : "var(--interactive-normal, var(--header-secondary, #b5bac1))",
                         cursor: "pointer",
                         margin: "0 4px",
                         transition: "color 0.15s ease"
