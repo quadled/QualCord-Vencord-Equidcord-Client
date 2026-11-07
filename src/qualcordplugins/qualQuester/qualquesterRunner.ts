@@ -1059,7 +1059,10 @@ export function launchQualquester() {
 
                     const req = this.queue.shift();
                     try {
-                        const res = await Mods.API.post({ url: req.url, body: req.body });
+                        const api = Mods.API || (window as any).Vencord?.Webpack?.Common?.RestAPI;
+                        const postFn = api?.post || api?.default?.post;
+                        if (typeof postFn !== "function") throw new Error("API.post is not available");
+                        const res = await postFn.call(api, { url: req.url, body: req.body });
                         req.resolve(res);
                     } catch (e) {
                         const err = ErrorHandler.classify(e);
@@ -2045,6 +2048,15 @@ export function launchQualquester() {
                         }
                     } catch (e) { }
 
+                    const apiCandidate = (W.Common?.RestAPI && typeof W.Common.RestAPI.post === "function" ? W.Common.RestAPI : null)
+                        || W.findByProps("get", "post", "put")
+                        || W.findByProps("get", "post")
+                        || W.find(m => m && typeof m.get === "function" && typeof m.post === "function")
+                        || W.Common?.RestAPI;
+                    if (apiCandidate && !apiCandidate.del && typeof apiCandidate.delete === "function") {
+                        apiCandidate.del = apiCandidate.delete;
+                    }
+
                     Mods = {
                         QuestStore: W.Common?.QuestStore || W.findStore("QuestStore") || W.findStore("QuestsStore"),
                         RunStore: W.Common?.RunningGameStore || W.findStore("RunningGameStore"),
@@ -2055,7 +2067,7 @@ export function launchQualquester() {
                         OrbStore: W.findStore("VirtualCurrencyStore"),
                         Premium: W.findByProps("canUseMoreQuestOrbs", "canUseShopDiscounts"),
                         Dispatcher: W.Common?.FluxDispatcher || W.findByProps("dispatch", "subscribe", "flushWaitQueue"),
-                        API: W.Common?.RestAPI || W.findByProps("get", "post", "del"),
+                        API: apiCandidate,
                         Router: routerModule,
                         ShowCurrentGame: findShowCurrentGameSetting(W.cache || W.wreq?.c)
                     };

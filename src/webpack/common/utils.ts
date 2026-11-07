@@ -43,7 +43,7 @@ export const Constants: t.Constants = mapMangledModuleLazy('ME:"/users/@me"', {
     FriendsSections: m => m.PENDING === "PENDING" && m.ADD_FRIEND
 });
 
-export const RestAPI: t.RestAPI = findLazy(m => typeof m === "object" && m.del && m.put);
+export const RestAPI: t.RestAPI = findLazy(m => typeof m === "object" && typeof m.get === "function" && typeof m.post === "function" && (m.del != null || m.put != null || m.delete != null));
 export const moment: typeof import("moment") = findByPropsLazy("parseTwoDigitYear");
 
 export const useDrag = findByCodeLazy("useDrag::spec.begin was deprecated");
